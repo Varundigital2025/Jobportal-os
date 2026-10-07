@@ -68,6 +68,18 @@ SETTING_GROUPS = {
 }
 
 
+import os
+
+
+def is_valid_branding_file(filename):
+    """Verifies that a branding image file exists on disk and is not a corrupted dummy file."""
+    if not filename or not isinstance(filename, str):
+        return False
+    from config import Config
+    path = os.path.join(Config.BRANDING_FOLDER, filename)
+    return os.path.exists(path) and os.path.getsize(path) > 100
+
+
 def get_all_settings():
     """
     Returns all configuration values as a dictionary, falling back to defaults.
@@ -78,6 +90,23 @@ def get_all_settings():
         stored = SystemSetting.query.all()
         for s in stored:
             settings[s.key] = s.value if s.value is not None else ''
+
+        # Smart logo resilience: ensure valid logo files are served across public & admin
+        site_logo = settings.get('site_logo', '')
+        admin_logo = settings.get('admin_portal_logo', '')
+        site_valid = is_valid_branding_file(site_logo)
+        admin_valid = is_valid_branding_file(admin_logo)
+
+        if not site_valid and admin_valid:
+            settings['site_logo'] = admin_logo
+        elif not site_valid:
+            settings['site_logo'] = ''
+
+        if not admin_valid and site_valid:
+            settings['admin_portal_logo'] = site_logo
+        elif not admin_valid:
+            settings['admin_portal_logo'] = ''
+
     except Exception:
         # If database table is not yet initialized or during migrations, return defaults
         pass
@@ -86,12 +115,20 @@ def get_all_settings():
 
 def get_setting(key, default=None):
     """
-    Retrieves a single setting value.
+    Retrieves a single setting value with smart fallback for branding assets.
     """
     try:
         setting = SystemSetting.query.filter_by(key=key).first()
         if setting and setting.value is not None:
-            return setting.value
+            val = setting.value
+            if key in ['site_logo', 'admin_portal_logo']:
+                if not is_valid_branding_file(val):
+                    other_key = 'admin_portal_logo' if key == 'site_logo' else 'site_logo'
+                    other_setting = SystemSetting.query.filter_by(key=other_key).first()
+                    if other_setting and other_setting.value and is_valid_branding_file(other_setting.value):
+                        return other_setting.value
+                    return default or ''
+            return val
     except Exception:
         pass
     return DEFAULT_SETTINGS.get(key, default)

@@ -540,12 +540,15 @@ def settings():
 
             # Check if admin logo was uploaded
             logo_file = request.files.get('admin_portal_logo')
+            sync_site = request.form.get('sync_site_logo', '1') in ['1', 'true', 'on']
             if logo_file and logo_file.filename and logo_file.filename.strip():
                 logo_fn, err = save_branding_image(logo_file, prefix='admin_logo_')
                 if err:
                     flash(f'Admin portal logo error: {err}', 'danger')
                     return redirect(url_for('admin.settings', tab='admin_portal'))
                 updates['admin_portal_logo'] = logo_fn
+                if sync_site:
+                    updates['site_logo'] = logo_fn
 
             update_settings(updates)
             flash('Admin Portal branding, logo, and console details updated successfully!', 'success')
@@ -589,12 +592,15 @@ def settings():
 
             # Check website logo upload
             site_logo_file = request.files.get('site_logo')
+            sync_admin = request.form.get('sync_admin_logo', '1') in ['1', 'true', 'on']
             if site_logo_file and site_logo_file.filename and site_logo_file.filename.strip():
                 logo_fn, err = save_branding_image(site_logo_file, prefix='site_logo_')
                 if err:
                     flash(f'Website logo error: {err}', 'danger')
                     return redirect(url_for('admin.settings', tab='website'))
                 updates['site_logo'] = logo_fn
+                if sync_admin:
+                    updates['admin_portal_logo'] = logo_fn
 
             # Check favicon upload
             favicon_file = request.files.get('site_favicon')
@@ -745,4 +751,38 @@ def api_portal_info():
         'integration_mode': settings_data.get('integration_mode'),
         'timestamp': datetime.utcnow().isoformat()
     })
+
+
+@admin_bp.route('/api/upload-logo', methods=['POST'])
+@admin_required
+def upload_logo_ajax():
+    """
+    Instant AJAX logo upload endpoint. Saves the branding logo immediately
+    and updates both admin and website logo records so it never disappears on reload.
+    """
+    target = request.form.get('target', 'both')  # 'admin', 'site', 'both'
+    logo_file = request.files.get('logo') or request.files.get('admin_portal_logo') or request.files.get('site_logo')
+    if not logo_file or not logo_file.filename or not logo_file.filename.strip():
+        return jsonify({'success': False, 'error': 'No image file was provided.'}), 400
+
+    prefix = 'admin_logo_' if target == 'admin' else ('site_logo_' if target == 'site' else 'brand_logo_')
+    saved_fn, err = save_branding_image(logo_file, prefix=prefix)
+    if err:
+        return jsonify({'success': False, 'error': err}), 400
+
+    updates = {}
+    if target in ['admin', 'both']:
+        updates['admin_portal_logo'] = saved_fn
+    if target in ['site', 'both']:
+        updates['site_logo'] = saved_fn
+
+    update_settings(updates)
+    logo_url = url_for('serve_branding_logo', filename=saved_fn)
+    return jsonify({
+        'success': True,
+        'filename': saved_fn,
+        'url': logo_url,
+        'message': 'Logo uploaded and saved successfully across all pages!'
+    })
+
 

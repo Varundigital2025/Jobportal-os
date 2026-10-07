@@ -59,13 +59,19 @@
       <div class="flex justify-between h-16">
         
         <!-- Left: Logo & Core Brand -->
+        <!-- Left: Logo & Core Brand -->
         <div class="flex items-center gap-6 lg:gap-8">
           {% if current_user and current_user.role == 'admin' and request.path.startswith('/admin') %}
             <!-- Distinct Minimalist Admin Brand -->
+            {% set admin_logo_file = site_settings.admin_portal_logo or site_settings.site_logo %}
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2.5 text-slate-900 tracking-tight group" title="{{ site_settings.admin_portal_name }}">
-              {% if site_settings and site_settings.admin_portal_logo %}
-                <img src="{{ url_for('serve_branding_logo', filename=site_settings.admin_portal_logo) }}" 
-                     alt="{{ site_settings.admin_portal_name }}" class="h-8 max-w-[150px] object-contain">
+              {% if site_settings and admin_logo_file %}
+                <img src="{{ url_for('serve_branding_logo', filename=admin_logo_file) }}" 
+                     alt="{{ site_settings.admin_portal_name }}" class="h-8 max-w-[150px] object-contain"
+                     onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm shadow-xs group-hover:bg-slate-800 transition hidden">
+                  <i class="fa-solid fa-shield-halved text-rose-400"></i>
+                </div>
               {% else %}
                 <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm shadow-xs group-hover:bg-slate-800 transition">
                   <i class="fa-solid fa-shield-halved text-rose-400"></i>
@@ -78,10 +84,18 @@
             </a>
           {% else %}
             <!-- Public Website Logo & Branding -->
+            {% set public_logo_file = site_settings.site_logo or site_settings.admin_portal_logo %}
             <a href="{{ url_for('home') }}" class="flex items-center gap-2.5 font-bold text-lg sm:text-xl text-slate-900 tracking-tight" title="{{ site_settings.site_name }}">
-              {% if site_settings and site_settings.site_logo %}
-                <img src="{{ url_for('serve_branding_logo', filename=site_settings.site_logo) }}" 
-                     alt="{{ site_settings.site_name }}" class="h-8 max-w-[150px] object-contain">
+              {% if site_settings and public_logo_file %}
+                <img src="{{ url_for('serve_branding_logo', filename=public_logo_file) }}" 
+                     alt="{{ site_settings.site_name }}" class="h-8 max-w-[150px] object-contain"
+                     onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                <div class="flex items-center gap-2.5 hidden">
+                  <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs text-sm">
+                    <i class="fa-solid fa-briefcase"></i>
+                  </div>
+                  <span>{{ (site_settings.site_name or 'JobPortal')[:3] }}<span class="text-blue-600">{{ (site_settings.site_name or 'JobPortal')[3:] }}</span></span>
+                </div>
               {% else %}
                 <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs text-sm">
                   <i class="fa-solid fa-briefcase"></i>
@@ -365,9 +379,17 @@
         <!-- Col 1: Brand & Bio -->
         <div class="space-y-4">
           <div class="flex items-center gap-2 font-bold text-xl text-slate-900">
-            {% if site_settings and site_settings.site_logo %}
-              <img src="{{ url_for('serve_branding_logo', filename=site_settings.site_logo) }}" 
-                   alt="{{ site_settings.site_name }}" class="h-8 max-w-[150px] object-contain">
+            {% set footer_logo_file = site_settings.site_logo or site_settings.admin_portal_logo %}
+            {% if site_settings and footer_logo_file %}
+              <img src="{{ url_for('serve_branding_logo', filename=footer_logo_file) }}" 
+                   alt="{{ site_settings.site_name }}" class="h-8 max-w-[150px] object-contain"
+                   onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+              <div class="flex items-center gap-2 hidden">
+                <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm">
+                  <i class="fa-solid fa-briefcase"></i>
+                </div>
+                <span>{{ (site_settings.site_name or 'JobPortal')[:3] }}<span class="text-blue-600">{{ (site_settings.site_name or 'JobPortal')[3:] }}</span></span>
+              </div>
             {% else %}
               <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm">
                 <i class="fa-solid fa-briefcase"></i>

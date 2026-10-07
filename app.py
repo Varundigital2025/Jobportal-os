@@ -95,7 +95,19 @@ def create_app(config_class=Config):
 
     @app.route('/uploads/branding/<path:filename>')
     def serve_branding_logo(filename):
-        return send_from_directory(app.config.get('BRANDING_FOLDER', os.path.join(app.config['UPLOAD_FOLDER'], 'branding')), filename)
+        folder = app.config.get('BRANDING_FOLDER', os.path.join(app.config['UPLOAD_FOLDER'], 'branding'))
+        filepath = os.path.join(folder, filename)
+        if not os.path.exists(filepath) or os.path.getsize(filepath) < 100:
+            # If requested file is missing or corrupted, look for any valid branding logo on disk
+            try:
+                for f in sorted(os.listdir(folder), key=lambda x: os.path.getmtime(os.path.join(folder, x)), reverse=True):
+                    cand = os.path.join(folder, f)
+                    if os.path.isfile(cand) and os.path.getsize(cand) > 100 and f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.svg')):
+                        return send_from_directory(folder, f)
+            except Exception:
+                pass
+            abort(404)
+        return send_from_directory(folder, filename)
 
     @app.route('/uploads/resumes/<path:filename>')
     @login_required
