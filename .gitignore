@@ -14,3 +14,6 @@ uploads/company_logos/*
 !uploads/company_logos/.gitkeep
 .vscode/
 .idea/
+cloudflared.exe
+*.exe
+run_tunnel.ps1.log
