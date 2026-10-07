@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}JobPortal — Find the Right Job. Build the Right Future.{% endblock %}
+
+{% block content %}
+<!-- ==================== HERO SECTION ==================== -->
+<section class="relative bg-gradient-to-b from-blue-50/70 to-slate-50 py-16 sm:py-24 border-b border-slate-200/60">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    
+    <!-- Hero Badges -->
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold uppercase tracking-wider mb-6">
+      <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+      Over {{ total_jobs_count }} active roles open right now
+    </div>
+
+    <!-- Hero Headlines -->
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight sm:leading-none">
+      Find the right job.<br class="hidden sm:inline" />
+      <span class="text-blue-600">Build the right future.</span>
+    </h1>
+
+    <p class="mt-5 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+      Discover opportunities from companies hiring now. Search jobs, apply faster, and manage your career in one place.
+    </p>
+
+    <!-- Main Hero Search Bar Box -->
+    <div class="mt-10 max-w-3xl mx-auto">
+      <form action="{{ url_for('jobs.list_jobs') }}" method="GET" class="bg-white p-2.5 sm:p-3 rounded-2xl shadow-lg border border-slate-200/80 flex flex-col sm:flex-row gap-2.5">
+        
+        <!-- Keyword Input -->
+        <div class="flex-1 flex items-center px-3 py-2 border sm:border-0 border-slate-200 rounded-xl">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 mr-3"></i>
+          <input type="text" name="q" placeholder="Job title, skills, or company" class="w-full text-sm text-slate-800 bg-transparent focus:outline-hidden placeholder-slate-400">
+        </div>
+
+        <div class="hidden sm:block w-px bg-slate-200 my-2"></div>
+
+        <!-- Location Input -->
+        <div class="flex-1 flex items-center px-3 py-2 border sm:border-0 border-slate-200 rounded-xl">
+          <i class="fa-solid fa-location-dot text-slate-400 mr-3"></i>
+          <input type="text" name="location" placeholder="City, state, or 'Remote'" class="w-full text-sm text-slate-800 bg-transparent focus:outline-hidden placeholder-slate-400">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary btn-lg rounded-xl shadow-md w-full sm:w-auto">
+          <span>Search Jobs</span>
+          <i class="fa-solid fa-arrow-right ml-1"></i>
+        </button>
+      </form>
+
+      <!-- Quick trending tags -->
+      <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500">
+        <span class="font-medium text-slate-700">Popular:</span>
+        <a href="{{ url_for('jobs.list_jobs', q='Python') }}" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">Python</a>
+        <a href="{{ url_for('jobs.list_jobs', work_mode='Remote') }}" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">Remote</a>
+        <a href="{{ url_for('jobs.list_jobs', q='Engineer') }}" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">Engineer</a>
+        <a href="{{ url_for('jobs.list_jobs', q='Design') }}" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">Design</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================== POPULAR CATEGORIES ==================== -->
+<section class="py-16 bg-white border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Popular Job Categories</h2>
+        <p class="text-slate-500 text-sm mt-1">Explore opportunities by specialized field and discipline</p>
+      </div>
+      <a href="{{ url_for('jobs.list_jobs') }}" class="mt-3 sm:mt-0 text-sm font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1">
+        Browse all categories <i class="fa-solid fa-arrow-right text-xs"></i>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {% for cat_name, count in categories %}
+        <a href="{{ url_for('jobs.list_jobs', category=cat_name) }}" class="app-card app-card-hover p-4 sm:p-5 flex items-start gap-3.5 group">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0 group-hover:bg-blue-600 group-hover:text-white transition">
+            {% if 'Software' in cat_name or 'Tech' in cat_name %}
+              <i class="fa-solid fa-code"></i>
+            {% elif 'Data' in cat_name or 'AI' in cat_name %}
+              <i class="fa-solid fa-brain"></i>
+            {% elif 'Design' in cat_name or 'Product' in cat_name %}
+              <i class="fa-solid fa-pen-nib"></i>
+            {% elif 'Marketing' in cat_name %}
+              <i class="fa-solid fa-bullhorn"></i>
+            {% elif 'Sales' in cat_name %}
+              <i class="fa-solid fa-chart-line"></i>
+            {% elif 'Finance' in cat_name %}
+              <i class="fa-solid fa-coins"></i>
+            {% elif 'Support' in cat_name or 'Customer' in cat_name %}
+              <i class="fa-solid fa-headset"></i>
+            {% else %}
+              <i class="fa-solid fa-briefcase"></i>
+            {% endif %}
+          </div>
+          <div class="min-w-0">
+            <h4 class="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition truncate">{{ cat_name }}</h4>
+            <span class="text-xs text-slate-500">{{ count }} {{ 'role' if count == 1 else 'roles' }}</span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FEATURED JOBS ==================== -->
+<section class="py-16 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Featured Jobs</h2>
+        <p class="text-slate-500 text-sm mt-1">High-impact roles actively hiring verified candidates</p>
+      </div>
+      <a href="{{ url_for('jobs.list_jobs') }}" class="mt-3 sm:mt-0 text-sm font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1">
+        View all {{ total_jobs_count }} jobs <i class="fa-solid fa-arrow-right text-xs"></i>
+      </a>
+    </div>
+
+    {% if featured_jobs %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for job in featured_jobs %}
+          {% include "components/job_card.html" %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-12 bg-white rounded-2xl border border-slate-200">
+        <i class="fa-solid fa-briefcase text-slate-300 text-4xl mb-3"></i>
+        <h3 class="text-base font-semibold text-slate-700">No active jobs posted yet</h3>
+        <p class="text-sm text-slate-500 mt-1">Check back soon for exciting career opportunities!</p>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary btn-sm mt-4">Browse All Jobs</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ==================== TOP HIRING COMPANIES ==================== -->
+<section class="py-16 bg-white border-t border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Top Companies Hiring</h2>
+        <p class="text-slate-500 text-sm mt-1">Work with forward-thinking teams across technology, product, and business</p>
+      </div>
+      <a href="{{ url_for('jobs.list_companies') }}" class="mt-3 sm:mt-0 text-sm font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1">
+        Explore all companies <i class="fa-solid fa-arrow-right text-xs"></i>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for company in top_companies %}
+        <div class="app-card app-card-hover p-6 flex items-start gap-4">
+          <div class="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+            {% if company.logo %}
+              <img src="{{ url_for('serve_company_logo', filename=company.logo) }}" alt="{{ company.company_name }}" class="w-full h-full object-cover">
+            {% else %}
+              <span class="font-bold text-slate-600 text-xl">{{ company.company_name[0] | upper }}</span>
+            {% endif %}
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="text-base font-bold text-slate-900 truncate">
+              <a href="{{ url_for('jobs.company_details', company_id=company.id) }}" class="hover:text-blue-600 transition">
+                {{ company.company_name }}
+              </a>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5 truncate">{{ company.industry or 'Technology & Innovation' }}</p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="badge badge-primary text-xs">{{ company.active_jobs_count }} Open {{ 'Role' if company.active_jobs_count == 1 else 'Roles' }}</span>
+              <span class="text-xs text-slate-400"><i class="fa-solid fa-location-dot"></i> {{ company.location or 'Global' }}</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ==================== HOW IT WORKS ==================== -->
+<section class="py-16 bg-slate-50 border-t border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">How JobPortal Works</h2>
+      <p class="text-slate-600 text-sm mt-2">A streamlined process connecting candidate aspirations with employer needs</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+      <!-- Step 1 -->
+      <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-xs relative">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold mb-5 shadow-xs">
+          1
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 mb-2">Create Your Profile</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Sign up as a candidate or employer, build your professional background, and upload your resume.
+        </p>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-xs relative">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl font-bold mb-5 shadow-xs">
+          2
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 mb-2">Discover & Apply</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Explore curated roles by tech stack, work mode, salary, and location. Submit applications with one click.
+        </p>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-xs relative">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold mb-5 shadow-xs">
+          3
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 mb-2">Track & Succeed</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Monitor your real-time application timeline from review to interview, or manage candidates efficiently.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== EMPLOYER CTA BANNER ==================== -->
+<section class="py-16 bg-blue-600 text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+      <div class="max-w-2xl text-center lg:text-left">
+        <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Are you hiring top talent?</h2>
+        <p class="mt-3 text-lg text-blue-100">
+          Post jobs in minutes, manage candidate applications in real time, and review resumes seamlessly on Windows without complex setups.
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <a href="{{ url_for('auth.login') }}" class="btn bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6 py-3 rounded-xl shadow-md text-center">
+          Employer Portal Login
+        </a>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn border border-white/40 text-white hover:bg-white/10 font-semibold px-6 py-3 rounded-xl text-center">
+          Explore Openings
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

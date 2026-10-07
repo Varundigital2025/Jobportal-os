@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.title }} at {{ job.company.company_name if job.company else 'Hiring Employer' }} — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/70 border-b border-slate-200 py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-xs text-slate-500 mb-6">
+      <a href="{{ url_for('home') }}" class="hover:text-blue-600">Home</a>
+      <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      <a href="{{ url_for('jobs.list_jobs') }}" class="hover:text-blue-600">Jobs</a>
+      <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      <span class="text-slate-800 font-medium truncate">{{ job.title }}</span>
+    </nav>
+
+    <!-- Header Content Card -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div class="flex items-start sm:items-center gap-5">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+          {% if job.company and job.company.logo %}
+            <img src="{{ url_for('serve_company_logo', filename=job.company.logo) }}" alt="{{ job.company.company_name }}" class="w-full h-full object-cover">
+          {% else %}
+            <span class="font-extrabold text-2xl text-slate-700">{{ (job.company.company_name[0] if job.company else job.title[0]) | upper }}</span>
+          {% endif %}
+        </div>
+
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold text-blue-600">
+              {{ job.company.company_name if job.company else 'Verified Employer' }}
+            </span>
+            {% if job.status == 'Open' %}
+              <span class="badge badge-success">Actively Hiring</span>
+            {% else %}
+              <span class="badge badge-danger">Applications Closed</span>
+            {% endif %}
+          </div>
+
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
+            {{ job.title }}
+          </h1>
+
+          <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500 mt-2.5">
+            <span><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>{{ job.location }}</span>
+            <span><i class="fa-solid fa-briefcase mr-1 text-slate-400"></i>{{ job.job_type }}</span>
+            <span><i class="fa-solid fa-laptop-house mr-1 text-slate-400"></i>{{ job.work_mode }}</span>
+            <span><i class="fa-solid fa-money-bill-wave mr-1 text-slate-400"></i>{{ job.formatted_salary }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        {% if job.status == 'Closed' %}
+          <div class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-500 text-sm font-semibold border border-slate-200 text-center w-full sm:w-auto">
+            <i class="fa-solid fa-lock mr-1.5"></i> Applications Closed
+          </div>
+        {% elif user_has_applied %}
+          <div class="px-5 py-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-sm font-semibold border border-emerald-200 text-center w-full sm:w-auto flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+            <span>Application Submitted: <strong class="capitalize">{{ existing_application.status if existing_application else 'Applied' }}</strong></span>
+          </div>
+        {% elif current_user and current_user.role == 'candidate' %}
+          <button type="button" data-modal-target="apply-modal" class="btn btn-primary btn-lg w-full sm:w-auto">
+            <i class="fa-solid fa-paper-plane mr-1.5"></i> Apply Now
+          </button>
+        {% elif not current_user %}
+          <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-primary btn-lg w-full sm:w-auto">
+            Login to Apply
+          </a>
+        {% endif %}
+
+        {% if current_user and current_user.role == 'candidate' %}
+          <button type="button"
+                  data-job-id="{{ job.id }}"
+                  class="btn-save-job btn btn-secondary btn-lg {{ 'saved-active' if user_saved else '' }}"
+                  title="Bookmark job">
+            <i class="save-icon fa-bookmark mr-1.5 {{ 'fa-solid text-rose-500' if user_saved else 'fa-regular' }}"></i>
+            <span class="save-label">{{ 'Saved' if user_saved else 'Save' }}</span>
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== BODY DETAILS ==================== -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Left 2 Cols: Job Description, Requirements, Responsibilities -->
+    <div class="lg:col-span-2 space-y-8">
+      
+      <!-- Key Specs Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 bg-white rounded-2xl border border-slate-200 text-center">
+        <div>
+          <span class="text-xs text-slate-400 block mb-1">Experience</span>
+          <span class="text-sm font-semibold text-slate-800">{{ job.experience_level or 'Not specified' }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block mb-1">Work Mode</span>
+          <span class="text-sm font-semibold text-slate-800">{{ job.work_mode }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block mb-1">Deadline</span>
+          <span class="text-sm font-semibold text-slate-800">{{ job.deadline.strftime('%b %d, %Y') if job.deadline else 'Open Until Filled' }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block mb-1">Posted</span>
+          <span class="text-sm font-semibold text-slate-800">{{ job.created_at.strftime('%b %d, %Y') }}</span>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4">
+        <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">About The Role</h2>
+        <div class="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+          {{ job.description }}
+        </div>
+      </div>
+
+      <!-- Responsibilities -->
+      {% if job.responsibilities %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4">
+          <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">Key Responsibilities</h2>
+          <div class="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+            {{ job.responsibilities }}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Requirements -->
+      {% if job.requirements %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4">
+          <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">Requirements & Qualifications</h2>
+          <div class="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+            {{ job.requirements }}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Required Skills -->
+      {% if job.skills_list %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4">
+          <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">Desired Skills & Technologies</h2>
+          <div class="flex flex-wrap gap-2">
+            {% for skill in job.skills_list %}
+              <span class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-100">
+                {{ skill }}
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Right 1 Col: Company Information Card -->
+    <aside class="space-y-6">
+      
+      {% if job.company %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 sticky top-20">
+          <h3 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">About the Company</h3>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+              {% if job.company.logo %}
+                <img src="{{ url_for('serve_company_logo', filename=job.company.logo) }}" alt="{{ job.company.company_name }}" class="w-full h-full object-cover">
+              {% else %}
+                <span class="font-bold text-slate-700 text-lg">{{ job.company.company_name[0] | upper }}</span>
+              {% endif %}
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-900 text-sm leading-tight">{{ job.company.company_name }}</h4>
+              <span class="text-xs text-slate-500">{{ job.company.industry or 'Technology' }}</span>
+            </div>
+          </div>
+
+          {% if job.company.description %}
+            <p class="text-xs text-slate-600 leading-relaxed line-clamp-4">
+              {{ job.company.description }}
+            </p>
+          {% endif %}
+
+          <div class="space-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
+            {% if job.company.company_size %}
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Company Size</span>
+                <span class="font-medium text-slate-800">{{ job.company.company_size }} employees</span>
+              </div>
+            {% endif %}
+            {% if job.company.location %}
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Headquarters</span>
+                <span class="font-medium text-slate-800">{{ job.company.location }}</span>
+              </div>
+            {% endif %}
+            {% if job.company.website %}
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Website</span>
+                <a href="{{ job.company.website }}" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-600 hover:underline">
+                  Visit Website <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-0.5"></i>
+                </a>
+              </div>
+            {% endif %}
+          </div>
+
+          <a href="{{ url_for('jobs.company_details', company_id=job.company.id) }}" class="btn btn-secondary btn-sm w-full">
+            View All Company Jobs
+          </a>
+        </div>
+      {% endif %}
+
+      <!-- Similar Jobs -->
+      {% if similar_jobs %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+          <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Similar Roles in {{ job.category }}</h3>
+          <div class="space-y-3">
+            {% for sim in similar_jobs %}
+              <div class="p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200">
+                <h4 class="text-sm font-semibold text-slate-900 line-clamp-1">
+                  <a href="{{ url_for('jobs.job_details', job_id=sim.id) }}" class="hover:text-blue-600">
+                    {{ sim.title }}
+                  </a>
+                </h4>
+                <div class="text-xs text-slate-500 flex items-center justify-between mt-1">
+                  <span>{{ sim.company.company_name if sim.company else 'Employer' }}</span>
+                  <span class="font-semibold text-slate-700">{{ sim.formatted_salary }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+    </aside>
+
+  </div>
+</div>
+
+<!-- ==================== APPLY JOB MODAL ==================== -->
+{% if current_user and current_user.role == 'candidate' and job.status == 'Open' and not user_has_applied %}
+<div id="apply-modal" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative animate-fadeIn max-h-[92vh] overflow-y-auto">
+    
+    <!-- Modal Close Button -->
+    <button type="button" data-modal-close class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 text-lg">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div class="mb-5 pb-4 border-b border-slate-100">
+      <span class="badge badge-primary text-xs mb-1.5">Job Application Form</span>
+      <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900">Apply for {{ job.title }}</h3>
+      <p class="text-xs text-slate-500 mt-1">{{ job.company.company_name if job.company else 'Hiring Employer' }} &bull; {{ job.location }} &bull; {{ job.job_type }}</p>
+      <p class="text-[11px] text-amber-700 bg-amber-50 rounded-lg p-2 mt-2 border border-amber-200">
+        <i class="fa-solid fa-circle-info mr-1"></i> Please review and complete all required fields below. Your application will be submitted directly to the administrator for review.
+      </p>
+    </div>
+
+    <form action="{{ url_for('jobs.apply_job', job_id=job.id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+      
+      <!-- Section 1: Contact Details -->
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-id-card text-blue-600"></i> Personal & Contact Information
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="form-label text-xs font-semibold" for="app-name">Full Name <span class="text-rose-500">*</span></label>
+            <input type="text" id="app-name" name="applicant_name" value="{{ current_user.name }}" required
+                   placeholder="Your full legal name" class="form-control text-xs">
+          </div>
+
+          <div>
+            <label class="form-label text-xs font-semibold" for="app-email">Email Address <span class="text-rose-500">*</span></label>
+            <input type="email" id="app-email" name="applicant_email" value="{{ current_user.email }}" required
+                   placeholder="your.email@example.com" class="form-control text-xs">
+          </div>
+
+          <div>
+            <label class="form-label text-xs font-semibold" for="app-phone">Phone Number <span class="text-rose-500">*</span></label>
+            <input type="tel" id="app-phone" name="applicant_phone" value="{{ current_user.phone or '' }}" required
+                   placeholder="+1 (555) 000-0000" class="form-control text-xs">
+          </div>
+
+          <div>
+            <label class="form-label text-xs font-semibold" for="app-loc">Current City / Location <span class="text-rose-500">*</span></label>
+            <input type="text" id="app-loc" name="applicant_location" value="{{ current_user.location or '' }}" required
+                   placeholder="e.g. San Francisco, CA" class="form-control text-xs">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Professional Qualifications -->
+      <div class="pt-2 border-t border-slate-100">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-graduation-cap text-blue-600"></i> Qualifications & Experience
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="form-label text-xs font-semibold" for="app-exp">Work Experience <span class="text-rose-500">*</span></label>
+            <input type="text" id="app-exp" name="experience" value="{{ current_user.candidate_profile.experience if current_user.candidate_profile else '' }}" required
+                   placeholder="e.g. 3 years in full stack engineering" class="form-control text-xs">
+          </div>
+
+          <div>
+            <label class="form-label text-xs font-semibold" for="app-qual">Highest Qualification / Degree <span class="text-rose-500">*</span></label>
+            <input type="text" id="app-qual" name="qualification" value="{{ (current_user.candidate_profile.qualification or current_user.candidate_profile.education) if current_user.candidate_profile else '' }}" required
+                   placeholder="e.g. B.S. in Computer Science" class="form-control text-xs">
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label text-xs font-semibold" for="app-skills">Key Relevant Skills <span class="text-rose-500">*</span></label>
+          <input type="text" id="app-skills" name="skills" value="{{ current_user.candidate_profile.skills if current_user.candidate_profile else '' }}" required
+                 placeholder="e.g. Python, SQL, REST APIs, Git, Docker" class="form-control text-xs">
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Separate skills with commas matching this job description</span>
+        </div>
+      </div>
+
+      <!-- Section 3: Resume Upload -->
+      <div class="pt-2 border-t border-slate-100">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-file-pdf text-rose-600"></i> Resume Document <span class="text-rose-500">*</span>
+        </h4>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+          {% if current_user.candidate_profile and current_user.candidate_profile.resume_path %}
+            <div class="flex items-center justify-between text-xs text-slate-700 py-1 bg-white p-2.5 rounded-lg border border-slate-200">
+              <span class="flex items-center gap-1.5 text-emerald-700 font-semibold truncate">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                Current Resume on File: {{ current_user.candidate_profile.resume_filename or 'resume.pdf' }}
+              </span>
+              <span class="badge badge-success text-[10px]">Attached</span>
+            </div>
+            <label class="text-[11px] text-slate-500 block">
+              You may keep your resume on file, or upload a tailored resume for this role below:
+            </label>
+            <input type="file" name="resume" accept=".pdf,.doc,.docx,.rtf,.txt"
+                   class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+          {% else %}
+            <p class="text-xs text-amber-800 font-medium">Please upload your resume to complete this application:</p>
+            <input type="file" name="resume" accept=".pdf,.doc,.docx,.rtf,.txt" required
+                   class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+          {% endif %}
+          <span class="text-[11px] text-slate-400 block">Supported formats: PDF, DOC, DOCX, RTF, TXT (Maximum file size: 16MB)</span>
+        </div>
+      </div>
+
+      <!-- Section 4: Cover Letter -->
+      <div class="pt-2 border-t border-slate-100">
+        <label class="form-label text-xs font-semibold text-slate-700" for="app-letter">Cover Letter / Note to Recruiter (Optional)</label>
+        <textarea id="app-letter" name="cover_letter" rows="3" placeholder="Explain why you are the best candidate for this role..."
+                  class="form-control text-xs"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <button type="button" data-modal-close class="btn btn-secondary btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm px-6 font-semibold shadow-xs">
+          <i class="fa-solid fa-paper-plane mr-1.5"></i> Submit Application
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

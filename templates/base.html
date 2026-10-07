@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}JobPortal — Connect With Top Careers & Talent{% endblock %}</title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Core Design Tokens & Custom Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- ==================== MAIN HEADER NAVIGATION ==================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        
+        <!-- Left: Logo & Core Navigation -->
+        <div class="flex items-center gap-8">
+          <a href="{{ url_for('home') }}" class="flex items-center gap-2.5 font-bold text-xl text-slate-900 tracking-tight">
+            <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+              <i class="fa-solid fa-briefcase text-lg"></i>
+            </div>
+            <span>Job<span class="text-blue-600">Portal</span></span>
+          </a>
+
+          <!-- Role-Aware Desktop Navigation Links -->
+          <nav class="hidden md:flex items-center space-x-1">
+            {% if not current_user %}
+              <!-- Public Navigation -->
+              <a href="{{ url_for('home') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">Home</a>
+              <a href="{{ url_for('jobs.list_jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">Find Jobs</a>
+              <a href="{{ url_for('jobs.list_companies') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">Companies</a>
+              <a href="{{ url_for('about') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">About</a>
+
+            {% elif current_user.role == 'candidate' %}
+              <!-- Candidate Navigation -->
+              <a href="{{ url_for('candidate.dashboard') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-gauge text-slate-400 mr-1.5"></i>Dashboard
+              </a>
+              <a href="{{ url_for('jobs.list_jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-magnifying-glass text-slate-400 mr-1.5"></i>Find Jobs
+              </a>
+              <a href="{{ url_for('candidate.applications') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-paper-plane text-slate-400 mr-1.5"></i>Applications
+              </a>
+              <a href="{{ url_for('candidate.saved_jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-bookmark text-slate-400"></i>Saved
+                {% if user_saved_jobs_count > 0 %}
+                  <span id="saved-jobs-counter" class="bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full font-semibold">{{ user_saved_jobs_count }}</span>
+                {% endif %}
+              </a>
+              <a href="{{ url_for('candidate.settings') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-gear text-slate-400 mr-1.5"></i>Settings
+              </a>
+
+            {% elif current_user.role == 'employer' %}
+              <!-- Employer Navigation -->
+              <a href="{{ url_for('employer.dashboard') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-gauge text-slate-400 mr-1.5"></i>Dashboard
+              </a>
+              <a href="{{ url_for('employer.manage_jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-briefcase text-slate-400 mr-1.5"></i>My Jobs
+              </a>
+              <a href="{{ url_for('employer.applicants') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-users text-slate-400 mr-1.5"></i>Applicants
+              </a>
+              <a href="{{ url_for('employer.company_profile') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-building text-slate-400 mr-1.5"></i>Company
+              </a>
+
+            {% elif current_user.role == 'admin' %}
+              <!-- Admin Navigation -->
+              <a href="{{ url_for('admin.dashboard') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-chart-line text-slate-400 mr-1.5"></i>Dashboard
+              </a>
+              <a href="{{ url_for('admin.users') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-user-gear text-slate-400 mr-1.5"></i>Users
+              </a>
+              <a href="{{ url_for('admin.employers') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-building text-slate-400 mr-1.5"></i>Employers
+              </a>
+              <a href="{{ url_for('admin.jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-briefcase text-slate-400 mr-1.5"></i>Jobs
+              </a>
+              <a href="{{ url_for('admin.applications') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-file-lines text-slate-400 mr-1.5"></i>Applications
+              </a>
+            {% endif %}
+          </nav>
+        </div>
+
+        <!-- Right: Auth CTAs & Profile Menu -->
+        <div class="hidden md:flex items-center gap-3">
+          {% if not current_user %}
+            <a href="{{ url_for('auth.login') }}" class="text-sm font-medium text-slate-700 hover:text-blue-600 px-3 py-2 rounded-lg transition">Log in</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">
+              <i class="fa-solid fa-user-plus mr-1"></i> Register
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm ml-1">
+              Employer Portal
+            </a>
+          {% else %}
+            {% if current_user.role == 'employer' %}
+              <a href="{{ url_for('employer.create_job') }}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus mr-1"></i> Post Job
+              </a>
+            {% elif current_user.role == 'admin' %}
+              <a href="{{ url_for('admin.create_job') }}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus mr-1"></i> Post Job
+              </a>
+            {% endif %}
+
+            <!-- Notifications Bell -->
+            <a href="{{ url_for('notifications.list_notifications') }}" title="Notifications" class="relative p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition">
+              <i class="fa-solid fa-bell text-lg"></i>
+              {% if unread_notifications_count and unread_notifications_count > 0 %}
+                <span class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-xs">
+                  {{ unread_notifications_count if unread_notifications_count < 10 else '9+' }}
+                </span>
+              {% endif %}
+            </a>
+
+            <!-- User Dropdown Details -->
+            <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
+              <div class="flex flex-col text-right">
+                <span class="text-sm font-semibold text-slate-800 leading-tight">{{ current_user.name }}</span>
+                <span class="text-xs text-slate-500 capitalize flex items-center justify-end gap-1">
+                  {% if current_user.role == 'admin' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Admin
+                  {% elif current_user.role == 'employer' %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Employer
+                  {% else %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Candidate
+                  {% endif %}
+                </span>
+              </div>
+
+              {% if current_user.role == 'candidate' %}
+                <a href="{{ url_for('candidate.profile') }}" title="Edit Profile" class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-blue-500 transition">
+                  {% if current_user.profile_photo %}
+                    <img src="{{ url_for('serve_profile_photo', filename=current_user.profile_photo) }}" alt="{{ current_user.name }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <i class="fa-solid fa-user text-slate-500 text-sm"></i>
+                  {% endif %}
+                </a>
+              {% elif current_user.role == 'employer' %}
+                <a href="{{ url_for('employer.company_profile') }}" title="Company Profile" class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-blue-500 transition">
+                  {% if current_user.company and current_user.company.logo %}
+                    <img src="{{ url_for('serve_company_logo', filename=current_user.company.logo) }}" alt="{{ current_user.company.company_name }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <i class="fa-solid fa-building text-slate-500 text-sm"></i>
+                  {% endif %}
+                </a>
+              {% else %}
+                <div class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+              {% endif %}
+
+              <a href="{{ url_for('auth.logout') }}" title="Log Out" class="text-slate-400 hover:text-rose-600 p-2 rounded-lg transition">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              </a>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Mobile Menu Hamburger Button & Quick Notification -->
+        <div class="flex items-center gap-2 md:hidden">
+          {% if current_user %}
+            <a href="{{ url_for('notifications.list_notifications') }}" title="Notifications" class="relative p-2 text-slate-600 hover:text-blue-600 rounded-lg">
+              <i class="fa-solid fa-bell text-lg"></i>
+              {% if unread_notifications_count and unread_notifications_count > 0 %}
+                <span class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white">
+                  {{ unread_notifications_count if unread_notifications_count < 10 else '9+' }}
+                </span>
+              {% endif %}
+            </a>
+          {% endif %}
+          <button id="mobile-menu-toggle" type="button" class="text-slate-600 hover:text-slate-900 p-2 rounded-lg focus:outline-hidden">
+            <i class="fa-solid fa-bars text-xl"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2">
+      {% if not current_user %}
+        <a href="{{ url_for('home') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Home</a>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Find Jobs</a>
+        <a href="{{ url_for('jobs.list_companies') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Companies</a>
+        <a href="{{ url_for('about') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">About</a>
+        <div class="pt-4 border-t border-slate-100 flex flex-col gap-2">
+          <a href="{{ url_for('auth.login') }}" class="btn btn-secondary w-full">Log In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-full">Register</a>
+        </div>
+      {% elif current_user.role == 'candidate' %}
+        <a href="{{ url_for('candidate.dashboard') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Dashboard</a>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Find Jobs</a>
+        <a href="{{ url_for('candidate.applications') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Applications</a>
+        <a href="{{ url_for('candidate.saved_jobs') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Saved Jobs</a>
+        <a href="{{ url_for('candidate.profile') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Profile</a>
+        <a href="{{ url_for('candidate.resume') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Resume</a>
+        <a href="{{ url_for('candidate.settings') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">
+          <i class="fa-solid fa-gear text-slate-400 mr-2"></i>Settings
+        </a>
+        <a href="{{ url_for('notifications.list_notifications') }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">
+          <span><i class="fa-solid fa-bell text-slate-400 mr-2"></i>Notifications</span>
+          {% if unread_notifications_count and unread_notifications_count > 0 %}
+            <span class="bg-rose-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">{{ unread_notifications_count }}</span>
+          {% endif %}
+        </a>
+        <div class="pt-4 border-t border-slate-100">
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-sm w-full">Log Out</a>
+        </div>
+      {% elif current_user.role == 'employer' %}
+        <a href="{{ url_for('employer.dashboard') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Dashboard</a>
+        <a href="{{ url_for('employer.manage_jobs') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">My Jobs</a>
+        <a href="{{ url_for('employer.create_job') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Post New Job</a>
+        <a href="{{ url_for('employer.applicants') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Applicants</a>
+        <a href="{{ url_for('employer.company_profile') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Company Profile</a>
+        <a href="{{ url_for('notifications.list_notifications') }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">
+          <span><i class="fa-solid fa-bell text-slate-400 mr-2"></i>Notifications</span>
+          {% if unread_notifications_count and unread_notifications_count > 0 %}
+            <span class="bg-rose-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">{{ unread_notifications_count }}</span>
+          {% endif %}
+        </a>
+        <div class="pt-4 border-t border-slate-100">
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-sm w-full">Log Out</a>
+        </div>
+      {% elif current_user.role == 'admin' %}
+        <a href="{{ url_for('admin.dashboard') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Admin Dashboard</a>
+        <a href="{{ url_for('admin.create_job') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Post Job</a>
+        <a href="{{ url_for('admin.users') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Users</a>
+        <a href="{{ url_for('admin.employers') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Employers</a>
+        <a href="{{ url_for('admin.jobs') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Jobs</a>
+        <a href="{{ url_for('admin.applications') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Applications</a>
+        <a href="{{ url_for('notifications.list_notifications') }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">
+          <span><i class="fa-solid fa-bell text-slate-400 mr-2"></i>Notifications</span>
+          {% if unread_notifications_count and unread_notifications_count > 0 %}
+            <span class="bg-rose-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">{{ unread_notifications_count }}</span>
+          {% endif %}
+        </a>
+        <div class="pt-4 border-t border-slate-100">
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-sm w-full">Log Out</a>
+        </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- ==================== FLASH NOTIFICATIONS ==================== -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-alert flash-{{ category }} shadow-xs">
+            <div class="flex items-center gap-2.5">
+              {% if category == 'success' %}
+                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+              {% elif category == 'danger' %}
+                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+              {% elif category == 'warning' %}
+                <i class="fa-solid fa-circle-exclamation text-amber-600"></i>
+              {% else %}
+                <i class="fa-solid fa-circle-info text-blue-600"></i>
+              {% endif %}
+              <span class="font-medium">{{ message }}</span>
+            </div>
+            <button type="button" class="alert-close text-slate-500 hover:text-slate-800 transition px-2">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- ==================== MAIN PAGE CONTENT ==================== -->
+  <main class="flex-grow">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ==================== PROFESSIONAL FOOTER ==================== -->
+  <footer class="bg-white border-t border-slate-200 mt-16 pt-12 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-100">
+        
+        <!-- Col 1: Brand & Bio -->
+        <div class="space-y-4">
+          <div class="flex items-center gap-2 font-bold text-xl text-slate-900">
+            <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm">
+              <i class="fa-solid fa-briefcase"></i>
+            </div>
+            <span>Job<span class="text-blue-600">Portal</span></span>
+          </div>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Connecting talented job seekers with industry-leading employers. Explore career opportunities, apply seamlessly, and build your future.
+          </p>
+          <div class="flex items-center space-x-3 text-slate-400">
+            <span class="hover:text-blue-600 cursor-pointer"><i class="fa-brands fa-github text-lg"></i></span>
+            <span class="hover:text-blue-600 cursor-pointer"><i class="fa-brands fa-linkedin text-lg"></i></span>
+            <span class="hover:text-blue-600 cursor-pointer"><i class="fa-brands fa-twitter text-lg"></i></span>
+          </div>
+        </div>
+
+        <!-- Col 2: For Candidates -->
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 tracking-wider uppercase mb-4">Candidates</h4>
+          <ul class="space-y-2.5 text-sm text-slate-600">
+            <li><a href="{{ url_for('jobs.list_jobs') }}" class="hover:text-blue-600 transition">Browse All Jobs</a></li>
+            <li><a href="{{ url_for('jobs.list_companies') }}" class="hover:text-blue-600 transition">Explore Companies</a></li>
+            <li><a href="{{ url_for('auth.register') }}" class="hover:text-blue-600 transition">Candidate Registration</a></li>
+            {% if current_user and current_user.role == 'candidate' %}
+              <li><a href="{{ url_for('candidate.applications') }}" class="hover:text-blue-600 transition">Application Status</a></li>
+              <li><a href="{{ url_for('candidate.resume') }}" class="hover:text-blue-600 transition">Upload Resume</a></li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <!-- Col 3: For Employers -->
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 tracking-wider uppercase mb-4">Employers</h4>
+          <ul class="space-y-2.5 text-sm text-slate-600">
+            {% if current_user and current_user.role == 'employer' %}
+              <li><a href="{{ url_for('employer.create_job') }}" class="hover:text-blue-600 transition">Post a Job</a></li>
+              <li><a href="{{ url_for('employer.applicants') }}" class="hover:text-blue-600 transition">Review Applicants</a></li>
+            {% else %}
+              <li><a href="{{ url_for('auth.login') }}" class="hover:text-blue-600 transition">Employer Login</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('jobs.list_jobs') }}" class="hover:text-blue-600 transition">Browse Job Listings</a></li>
+            <li><a href="{{ url_for('about') }}" class="hover:text-blue-600 transition">Hiring Solutions</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Platform Information -->
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 tracking-wider uppercase mb-4">Platform</h4>
+          <ul class="space-y-2.5 text-sm text-slate-600">
+            <li><a href="{{ url_for('about') }}" class="hover:text-blue-600 transition">About JobPortal</a></li>
+            <li><span class="text-slate-400">Privacy & Terms</span></li>
+            <li><span class="text-slate-400">Security Guidelines</span></li>
+            <li><span class="text-slate-400">API Documentation (Coming Soon)</span></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <div>
+          &copy; 2026 JobPortal Application. Running locally on Windows with Python & Flask.
+        </div>
+        <div class="flex items-center space-x-6">
+          <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> System Operational</span>
+          <span>SQLite Database</span>
+          <span>SQLAlchemy ORM</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

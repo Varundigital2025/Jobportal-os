@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Post a New Job Opening — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Post a New Job Opening</h1>
+    <p class="text-sm text-slate-500 mt-1">Specify role requirements and reach thousands of verified job seekers</p>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form action="{{ url_for('employer.create_job') }}" method="POST" class="space-y-8">
+    
+    <!-- Core Role Identity -->
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-briefcase text-blue-600"></i> Role Information
+      </h2>
+
+      <div>
+        <label class="form-label" for="job-title">Job Title <span class="text-rose-500">*</span></label>
+        <input type="text" id="job-title" name="title" value="{{ form_data.get('title', '') }}" required
+               placeholder="e.g. Senior Python & Cloud Backend Engineer" class="form-control text-sm">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="job-cat">Category <span class="text-rose-500">*</span></label>
+          <select id="job-cat" name="category" required class="form-control text-sm">
+            <option value="">Select Category</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {{ 'selected' if form_data.get('category') == cat else '' }}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="job-loc">Location <span class="text-rose-500">*</span></label>
+          <input type="text" id="job-loc" name="location" value="{{ form_data.get('location', '') }}" required
+                 placeholder="e.g. Austin, TX or Remote" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="job-type">Job Type <span class="text-rose-500">*</span></label>
+          <select id="job-type" name="job_type" required class="form-control text-sm">
+            {% for jt in job_types %}
+              <option value="{{ jt }}" {{ 'selected' if (form_data.get('job_type') == jt or jt == 'Full Time') else '' }}>{{ jt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="job-mode">Work Mode <span class="text-rose-500">*</span></label>
+          <select id="job-mode" name="work_mode" required class="form-control text-sm">
+            {% for wm in work_modes %}
+              <option value="{{ wm }}" {{ 'selected' if (form_data.get('work_mode') == wm or wm == 'Hybrid') else '' }}>{{ wm }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="job-exp">Experience Level</label>
+          <select id="job-exp" name="experience_level" class="form-control text-sm">
+            {% for exp in experience_levels %}
+              <option value="{{ exp }}" {{ 'selected' if form_data.get('experience_level') == exp else '' }}>{{ exp }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="job-deadline">Application Deadline</label>
+          <input type="date" id="job-deadline" name="deadline" value="{{ form_data.get('deadline', '') }}" class="form-control text-sm">
+        </div>
+      </div>
+    </div>
+
+    <!-- Compensation & Skills -->
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-money-bill-wave text-blue-600"></i> Compensation & Skills
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div>
+          <label class="form-label" for="sal-min">Minimum Annual Salary</label>
+          <input type="number" id="sal-min" name="salary_min" value="{{ form_data.get('salary_min', '') }}" placeholder="e.g. 90000" step="1000" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="sal-max">Maximum Annual Salary</label>
+          <input type="number" id="sal-max" name="salary_max" value="{{ form_data.get('salary_max', '') }}" placeholder="e.g. 130000" step="1000" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="sal-curr">Currency Symbol</label>
+          <input type="text" id="sal-curr" name="salary_currency" value="{{ form_data.get('salary_currency', '$') }}" class="form-control text-sm">
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label" for="job-skills">Required Skills (Comma-separated)</label>
+        <input type="text" id="job-skills" name="skills" value="{{ form_data.get('skills', '') }}"
+               placeholder="e.g. Python, Flask, SQL, Docker, AWS" class="form-control text-sm">
+      </div>
+    </div>
+
+    <!-- Descriptions & Requirements -->
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-file-lines text-blue-600"></i> Job Description & Specifics
+      </h2>
+
+      <div>
+        <label class="form-label" for="job-desc">Overview / Description <span class="text-rose-500">*</span></label>
+        <textarea id="job-desc" name="description" rows="5" required
+                  placeholder="Summarize the core purpose of this role and what makes your team exceptional..." class="form-control text-sm">{{ form_data.get('description', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="job-resp">Responsibilities</label>
+        <textarea id="job-resp" name="responsibilities" rows="4"
+                  placeholder="• Architect reliable web applications&#10;• Collaborate with cross-functional teams&#10;• Optimize backend pipelines" class="form-control text-sm">{{ form_data.get('responsibilities', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="job-req">Requirements & Qualifications</label>
+        <textarea id="job-req" name="requirements" rows="4"
+                  placeholder="• 4+ years of relevant experience&#10;• Strong familiarity with relational databases&#10;• Degree in CS or equivalent experience" class="form-control text-sm">{{ form_data.get('requirements', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="job-status">Publishing Status</label>
+        <select id="job-status" name="status" class="form-control text-sm max-w-xs">
+          <option value="Open" {{ 'selected' if form_data.get('status') == 'Open' else '' }}>Open (Live for applicants)</option>
+          <option value="Draft" {{ 'selected' if form_data.get('status') == 'Draft' else '' }}>Draft (Private)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3">
+      <a href="{{ url_for('employer.manage_jobs') }}" class="btn btn-secondary btn-sm">Cancel</a>
+      <button type="submit" class="btn btn-primary btn-sm px-6">Publish Job</button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

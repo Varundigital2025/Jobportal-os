@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Applicant Management — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Applicant Management</h1>
+        <p class="text-sm text-slate-500 mt-1">Review candidate applications, examine qualifications, and update recruitment status</p>
+      </div>
+
+      <!-- Filters: By Job & By Status -->
+      <form action="{{ url_for('employer.applicants') }}" method="GET" class="flex flex-wrap items-center gap-2">
+        <select name="job_id" onchange="this.form.submit()" class="form-control text-xs py-2 px-3 max-w-xs">
+          <option value="">All Jobs</option>
+          {% for j in employer_jobs %}
+            <option value="{{ j.id }}" {{ 'selected' if selected_job_id == j.id else '' }}>{{ j.title }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="status" onchange="this.form.submit()" class="form-control text-xs py-2 px-3">
+          <option value="">All Statuses</option>
+          {% for st in statuses %}
+            <option value="{{ st }}" {{ 'selected' if selected_status == st else '' }}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="app-card overflow-hidden">
+    {% if applications %}
+      <div class="table-responsive">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-slate-50/70 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
+              <th class="py-3.5 px-5 font-semibold">Candidate</th>
+              <th class="py-3.5 px-5 font-semibold">Position Applied</th>
+              <th class="py-3.5 px-5 font-semibold">Location</th>
+              <th class="py-3.5 px-5 font-semibold">Applied Date</th>
+              <th class="py-3.5 px-5 font-semibold">Resume</th>
+              <th class="py-3.5 px-5 font-semibold">Current Status</th>
+              <th class="py-3.5 px-5 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for app in applications %}
+              <tr class="hover:bg-slate-50/70 transition">
+                
+                <!-- Candidate Info -->
+                <td class="py-4 px-5">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                      {% if app.candidate.profile_photo %}
+                        <img src="{{ url_for('serve_profile_photo', filename=app.candidate.profile_photo) }}" alt="{{ app.candidate.name }}" class="w-full h-full object-cover">
+                      {% else %}
+                        {{ app.candidate.name[0] | upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <span class="font-bold text-slate-900 block">{{ app.candidate.name }}</span>
+                      <span class="text-xs text-slate-400 block">{{ app.candidate.email }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Position Applied -->
+                <td class="py-4 px-5">
+                  <div class="font-semibold text-slate-900">{{ app.job.title }}</div>
+                  <span class="text-xs text-slate-400">{{ app.job.category }}</span>
+                </td>
+
+                <!-- Location -->
+                <td class="py-4 px-5 text-xs text-slate-600">
+                  {{ app.candidate.location or 'Not specified' }}
+                </td>
+
+                <!-- Applied Date -->
+                <td class="py-4 px-5 text-xs text-slate-500">
+                  {{ app.applied_at.strftime('%b %d, %Y') }}
+                </td>
+
+                <!-- Resume Download Link -->
+                <td class="py-4 px-5">
+                  {% if app.resume_path %}
+                    <a href="{{ url_for('employer.download_resume', app_id=app.id) }}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition" title="Download Resume">
+                      <i class="fa-solid fa-file-pdf"></i> Resume
+                    </a>
+                  {% else %}
+                    <span class="text-xs text-slate-400 italic">None attached</span>
+                  {% endif %}
+                </td>
+
+                <!-- Current Status Dropdown & Update -->
+                <td class="py-4 px-5">
+                  <form action="{{ url_for('employer.update_status', app_id=app.id) }}" method="POST" class="flex items-center gap-1.5">
+                    <select name="status" class="form-control text-xs py-1 px-2 border-slate-200">
+                      {% for st in statuses %}
+                        <option value="{{ st }}" {{ 'selected' if app.status == st else '' }}>{{ st }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-sm py-1 px-2 text-xs" title="Save Status">
+                      <i class="fa-solid fa-check text-emerald-600"></i>
+                    </button>
+                  </form>
+                </td>
+
+                <!-- Actions: View Candidate Profile Modal -->
+                <td class="py-4 px-5 text-right whitespace-nowrap space-x-2">
+                  <button type="button" data-modal-target="cand-modal-{{ app.id }}" class="btn btn-secondary btn-sm py-1 px-2.5 text-xs">
+                    <i class="fa-solid fa-user mr-1"></i> Profile
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Candidate Modal View -->
+              <div id="cand-modal-{{ app.id }}" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                  <button type="button" data-modal-close class="absolute top-5 right-5 text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                  </button>
+
+                  <div class="flex items-center gap-4 pb-4 border-b border-slate-100 mb-5">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center font-bold text-xl text-slate-700 overflow-hidden">
+                      {% if app.candidate.profile_photo %}
+                        <img src="{{ url_for('serve_profile_photo', filename=app.candidate.profile_photo) }}" alt="{{ app.candidate.name }}" class="w-full h-full object-cover">
+                      {% else %}
+                        {{ app.candidate.name[0] | upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <h3 class="text-xl font-bold text-slate-900">{{ app.candidate.name }}</h3>
+                      <p class="text-xs text-slate-500">{{ app.candidate.candidate_profile.headline or 'Candidate on JobPortal' }}</p>
+                      <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400 mt-1">
+                        <span><i class="fa-solid fa-envelope mr-1"></i>{{ app.candidate.email }}</span>
+                        {% if app.candidate.phone %}<span><i class="fa-solid fa-phone mr-1"></i>{{ app.candidate.phone }}</span>{% endif %}
+                        {% if app.candidate.location %}<span><i class="fa-solid fa-location-dot mr-1"></i>{{ app.candidate.location }}</span>{% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Modal Body Sections -->
+                  <div class="space-y-4 text-xs">
+                    {% if app.cover_letter %}
+                      <div class="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100">
+                        <span class="font-bold text-blue-900 block mb-1">Cover Letter:</span>
+                        <p class="text-slate-700 leading-relaxed whitespace-pre-line">{{ app.cover_letter }}</p>
+                      </div>
+                    {% endif %}
+
+                    {% if app.candidate.candidate_profile %}
+                      {% set cp = app.candidate.candidate_profile %}
+                      {% if cp.bio %}
+                        <div>
+                          <span class="font-bold text-slate-800 block mb-1">Summary / Bio:</span>
+                          <p class="text-slate-600 leading-relaxed">{{ cp.bio }}</p>
+                        </div>
+                      {% endif %}
+
+                      {% if cp.skills %}
+                        <div>
+                          <span class="font-bold text-slate-800 block mb-1">Skills:</span>
+                          <div class="flex flex-wrap gap-1 mt-1">
+                            {% for skill in cp.skills_list %}
+                              <span class="badge badge-primary text-[11px]">{{ skill }}</span>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      {% endif %}
+
+                      {% if cp.experience %}
+                        <div>
+                          <span class="font-bold text-slate-800 block mb-1">Experience:</span>
+                          <p class="text-slate-600 leading-relaxed whitespace-pre-line">{{ cp.experience }}</p>
+                        </div>
+                      {% endif %}
+
+                      {% if cp.education %}
+                        <div>
+                          <span class="font-bold text-slate-800 block mb-1">Education:</span>
+                          <p class="text-slate-600 leading-relaxed">{{ cp.education }}</p>
+                        </div>
+                      {% endif %}
+
+                      {% if cp.linkedin_url or cp.portfolio_url %}
+                        <div class="pt-2 border-t border-slate-100 flex gap-4">
+                          {% if cp.linkedin_url %}
+                            <a href="{{ cp.linkedin_url }}" target="_blank" class="text-blue-600 hover:underline">
+                              <i class="fa-brands fa-linkedin mr-1"></i> LinkedIn
+                            </a>
+                          {% endif %}
+                          {% if cp.portfolio_url %}
+                            <a href="{{ cp.portfolio_url }}" target="_blank" class="text-blue-600 hover:underline">
+                              <i class="fa-solid fa-globe mr-1"></i> Portfolio
+                            </a>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+
+                  <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    {% if app.resume_path %}
+                      <a href="{{ url_for('employer.download_resume', app_id=app.id) }}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-download mr-1"></i> Download Resume
+                      </a>
+                    {% else %}
+                      <span></span>
+                    {% endif %}
+                    <button type="button" data-modal-close class="btn btn-secondary btn-sm">Close</button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-12 text-center">
+        <i class="fa-solid fa-users-slash text-slate-300 text-4xl mb-3"></i>
+        <h3 class="text-base font-bold text-slate-900">No applications received yet</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+          As candidates discover and apply to your open listings, their profiles and resumes will appear here.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

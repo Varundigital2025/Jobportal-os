@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Employer Dashboard — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+          {% if company.logo %}
+            <img src="{{ url_for('serve_company_logo', filename=company.logo) }}" alt="{{ company.company_name }}" class="w-full h-full object-cover">
+          {% else %}
+            <span class="font-extrabold text-xl text-slate-700">{{ company.company_name[0] | upper }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            {{ company.company_name }}
+          </h1>
+          <p class="text-sm text-slate-500 mt-0.5">Recruiting & Talent Overview for {{ user.name }}</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('employer.create_job') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-plus mr-1"></i> Post New Job
+        </a>
+        <a href="{{ url_for('employer.company_profile') }}" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-building mr-1"></i> Edit Profile
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  
+  <!-- ==================== EMPLOYER METRIC STATS ==================== -->
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    
+    <!-- Stat 1: Total Jobs -->
+    <div class="app-card p-5">
+      <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block">Total Jobs</span>
+      <span class="text-2xl font-bold text-slate-900 mt-1 block">{{ total_jobs }}</span>
+      <span class="text-[11px] text-slate-500 mt-1 block">Created positions</span>
+    </div>
+
+    <!-- Stat 2: Active Jobs -->
+    <div class="app-card p-5">
+      <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block">Active Jobs</span>
+      <span class="text-2xl font-bold text-emerald-600 mt-1 block">{{ active_jobs }}</span>
+      <span class="text-[11px] text-slate-500 mt-1 block">Receiving candidates</span>
+    </div>
+
+    <!-- Stat 3: Total Applications -->
+    <div class="app-card p-5">
+      <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block">Applications</span>
+      <span class="text-2xl font-bold text-blue-600 mt-1 block">{{ total_applications }}</span>
+      <span class="text-[11px] text-slate-500 mt-1 block">Total resumes received</span>
+    </div>
+
+    <!-- Stat 4: New / Unreviewed -->
+    <div class="app-card p-5">
+      <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block">New Applications</span>
+      <span class="text-2xl font-bold text-amber-600 mt-1 block">{{ new_applications }}</span>
+      <span class="text-[11px] text-slate-500 mt-1 block">Awaiting review</span>
+    </div>
+
+    <!-- Stat 5: Shortlisted / Pipeline -->
+    <div class="app-card p-5 col-span-2 sm:col-span-1">
+      <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block">Candidate Pipeline</span>
+      <span class="text-2xl font-bold text-purple-600 mt-1 block">{{ shortlisted_candidates }}</span>
+      <span class="text-[11px] text-slate-500 mt-1 block">In interview stages</span>
+    </div>
+
+  </div>
+
+  <!-- ==================== RECENT JOBS TABLE ==================== -->
+  <div class="app-card p-6 space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Recent Job Postings</h2>
+        <p class="text-xs text-slate-500">Monitor active applicant flow across your latest posted positions</p>
+      </div>
+      <a href="{{ url_for('employer.manage_jobs') }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800">
+        View All ({{ total_jobs }})
+      </a>
+    </div>
+
+    {% if recent_jobs %}
+      <div class="table-responsive">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase tracking-wider">
+              <th class="py-3 px-3 font-semibold">Job Title</th>
+              <th class="py-3 px-3 font-semibold">Location</th>
+              <th class="py-3 px-3 font-semibold">Applications</th>
+              <th class="py-3 px-3 font-semibold">Status</th>
+              <th class="py-3 px-3 font-semibold">Created</th>
+              <th class="py-3 px-3 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for job in recent_jobs %}
+              <tr class="hover:bg-slate-50/70 transition">
+                <td class="py-3 px-3 font-semibold text-slate-900">
+                  <a href="{{ url_for('jobs.job_details', job_id=job.id) }}" class="hover:text-blue-600">
+                    {{ job.title }}
+                  </a>
+                  <span class="text-xs text-slate-400 block">{{ job.category }}</span>
+                </td>
+                <td class="py-3 px-3 text-slate-600 text-xs">
+                  {{ job.location }} ({{ job.work_mode }})
+                </td>
+                <td class="py-3 px-3">
+                  <a href="{{ url_for('employer.applicants', job_id=job.id) }}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition">
+                    <i class="fa-solid fa-users text-[10px]"></i>
+                    {{ job.applicant_count }}
+                  </a>
+                </td>
+                <td class="py-3 px-3">
+                  <span class="badge {{ 'badge-success' if job.status == 'Open' else ('badge-neutral' if job.status == 'Draft' else 'badge-danger') }}">
+                    {{ job.status }}
+                  </span>
+                </td>
+                <td class="py-3 px-3 text-slate-500 text-xs">
+                  {{ job.created_at.strftime('%b %d, %Y') }}
+                </td>
+                <td class="py-3 px-3 text-right space-x-2">
+                  <a href="{{ url_for('employer.applicants', job_id=job.id) }}" class="btn btn-secondary btn-sm py-1 px-2.5 text-xs" title="Review Applicants">
+                    Applicants
+                  </a>
+                  <a href="{{ url_for('employer.edit_job', job_id=job.id) }}" class="btn btn-outline-primary btn-sm py-1 px-2.5 text-xs" title="Edit Job">
+                    Edit
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-10">
+        <i class="fa-solid fa-briefcase text-slate-300 text-4xl mb-3"></i>
+        <h4 class="text-sm font-bold text-slate-800">You haven't posted any jobs yet</h4>
+        <p class="text-xs text-slate-500 mt-1">Start attracting qualified candidates by posting your first role.</p>
+        <a href="{{ url_for('employer.create_job') }}" class="btn btn-primary btn-sm mt-4">
+          <i class="fa-solid fa-plus mr-1"></i> Post Your First Job
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

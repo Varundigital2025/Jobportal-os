@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Candidate Profile — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Your Candidate Profile</h1>
+        <p class="text-sm text-slate-500 mt-1">Keep your professional background updated for prospective employers</p>
+      </div>
+
+      <!-- Profile Completion Gauge -->
+      <div class="bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
+        <div>
+          <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Profile Strength</div>
+          <div class="text-sm font-extrabold text-blue-600">{{ profile.completion_percentage }}% Complete</div>
+        </div>
+        <div class="w-16 bg-slate-100 rounded-full h-2 overflow-hidden">
+          <div class="bg-blue-600 h-2 rounded-full" style="width: {{ profile.completion_percentage }}%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form action="{{ url_for('candidate.profile') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+    
+    <!-- ==================== BASIC PROFILE & PHOTO ==================== -->
+    <div class="app-card p-6 sm:p-8 space-y-6">
+      <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-id-card text-blue-600"></i> Basic Information
+      </h2>
+
+      <!-- Profile Photo Upload & Preview -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+        <div class="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative">
+          {% if user.profile_photo %}
+            <img id="profile-avatar-img" src="{{ url_for('serve_profile_photo', filename=user.profile_photo) }}" alt="{{ user.name }}" class="w-full h-full object-cover">
+          {% else %}
+            <img id="profile-avatar-img" src="" alt="Avatar Preview" class="w-full h-full object-cover hidden">
+            <i id="profile-avatar-placeholder" class="fa-solid fa-user text-3xl text-slate-400"></i>
+          {% endif %}
+        </div>
+        <div>
+          <label class="form-label text-xs font-semibold text-slate-700">Profile Photo</label>
+          <input type="file" id="profile-photo-input" name="profile_photo" accept="image/*"
+                 class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+          <span class="text-[11px] text-slate-400 mt-1 block">JPG, PNG, WEBP, GIF, JFIF, BMP (Max 5MB)</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="cand-name">Full Name <span class="text-rose-500">*</span></label>
+          <input type="text" id="cand-name" name="name" value="{{ user.name }}" required class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="cand-email">Email Address (Read-only)</label>
+          <input type="email" id="cand-email" value="{{ user.email }}" readonly disabled
+                 class="form-control text-sm bg-slate-50 text-slate-500 cursor-not-allowed">
+        </div>
+
+        <div>
+          <label class="form-label" for="cand-phone">Phone Number</label>
+          <input type="tel" id="cand-phone" name="phone" value="{{ user.phone or '' }}" placeholder="+1 (555) 000-0000" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="cand-loc">Current City / Location</label>
+          <input type="text" id="cand-loc" name="location" value="{{ user.location or '' }}" placeholder="e.g. San Francisco, CA" class="form-control text-sm">
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PROFESSIONAL BACKGROUND ==================== -->
+    <div class="app-card p-6 sm:p-8 space-y-6">
+      <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-briefcase text-blue-600"></i> Professional Details
+      </h2>
+
+      <div>
+        <label class="form-label" for="cand-headline">Professional Headline</label>
+        <input type="text" id="cand-headline" name="headline" value="{{ profile.headline or '' }}"
+               placeholder="e.g. Senior Backend Engineer | Python, Cloud & High-Throughput APIs" class="form-control text-sm">
+      </div>
+
+      <div>
+        <label class="form-label" for="cand-bio">Professional Summary / Bio</label>
+        <textarea id="cand-bio" name="bio" rows="4"
+                  placeholder="Introduce yourself, your primary areas of expertise, and what drives your career..." class="form-control text-sm">{{ profile.bio or '' }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="cand-skills">Skills (Comma-separated)</label>
+        <input type="text" id="cand-skills" name="skills" value="{{ profile.skills or '' }}"
+               placeholder="e.g. Python, Flask, PostgreSQL, Docker, AWS, React" class="form-control text-sm">
+        <span class="text-[11px] text-slate-400 mt-1 block">Separate skills with commas so they render as searchable tags</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="cand-exp">Work Experience Summary</label>
+          <textarea id="cand-exp" name="experience" rows="3"
+                    placeholder="Briefly describe your years in industry and key roles..." class="form-control text-sm">{{ profile.experience or '' }}</textarea>
+        </div>
+
+        <div>
+          <label class="form-label" for="cand-edu">Education & Degree</label>
+          <textarea id="cand-edu" name="education" rows="3"
+                    placeholder="e.g. B.S. in Computer Science - UC Berkeley" class="form-control text-sm">{{ profile.education or '' }}</textarea>
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label" for="cand-qual">Highest Qualification</label>
+        <input type="text" id="cand-qual" name="qualification" value="{{ profile.qualification or '' }}"
+               placeholder="e.g. Master of Science / Bachelor of Technology" class="form-control text-sm">
+      </div>
+    </div>
+
+    <!-- ==================== LINKS & RESUME ==================== -->
+    <div class="app-card p-6 sm:p-8 space-y-6">
+      <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-link text-blue-600"></i> Online Presence & Resume
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="cand-linkedin">LinkedIn Profile URL</label>
+          <input type="url" id="cand-linkedin" name="linkedin_url" value="{{ profile.linkedin_url or '' }}"
+                 placeholder="https://linkedin.com/in/username" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="cand-portfolio">Portfolio / GitHub Website URL</label>
+          <input type="url" id="cand-portfolio" name="portfolio_url" value="{{ profile.portfolio_url or '' }}"
+                 placeholder="https://yourportfolio.dev" class="form-control text-sm">
+        </div>
+      </div>
+
+      <!-- Quick Resume Update Section -->
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+        <label class="form-label text-xs font-bold text-slate-700">Update Profile Resume</label>
+        {% if profile.resume_path %}
+          <div class="text-xs text-emerald-700 font-medium mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-check"></i>
+            Current Resume: {{ profile.resume_filename or 'resume.pdf' }}
+            <a href="{{ url_for('candidate.download_resume') }}" class="text-blue-600 hover:underline ml-2">Download</a>
+          </div>
+        {% endif %}
+        <input type="file" name="resume" accept=".pdf,.doc,.docx,.rtf,.txt"
+               class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        <span class="text-[11px] text-slate-400 mt-1 block">Supported formats: PDF, DOC, DOCX, RTF, TXT (Up to 16MB)</span>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-4">
+      <a href="{{ url_for('candidate.dashboard') }}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary px-6 shadow-sm">Save Profile Changes</button>
+    </div>
+
+  </form>
+</div>
+
+<!-- JavaScript for instant image preview -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const photoInput = document.getElementById('profile-photo-input');
+  const avatarImg = document.getElementById('profile-avatar-img');
+  const avatarPlaceholder = document.getElementById('profile-avatar-placeholder');
+
+  if (photoInput) {
+    photoInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          if (avatarImg) {
+            avatarImg.src = evt.target.result;
+            avatarImg.classList.remove('hidden');
+          }
+          if (avatarPlaceholder) {
+            avatarPlaceholder.classList.add('hidden');
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

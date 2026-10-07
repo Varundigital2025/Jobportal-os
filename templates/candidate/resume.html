@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Management — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Manage Your Resume</h1>
+    <p class="text-sm text-slate-500 mt-1">Upload, review, or replace your primary resume used for job applications</p>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+  
+  <!-- Current Resume Status Card -->
+  <div class="app-card p-6 sm:p-8">
+    <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+      <i class="fa-solid fa-file-lines text-blue-600"></i> Current Resume On File
+    </h2>
+
+    {% if profile.resume_path %}
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-file-pdf"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">{{ profile.resume_filename or 'resume.pdf' }}</h3>
+            <span class="text-xs text-slate-500">Uploaded to secure storage</span>
+          </div>
+        </div>
+
+        <a href="{{ url_for('candidate.download_resume') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-download mr-1"></i> Download Resume
+        </a>
+      </div>
+    {% else %}
+      <div class="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-center">
+        <i class="fa-solid fa-file-circle-exclamation text-amber-500 text-3xl mb-2"></i>
+        <h3 class="text-sm font-bold text-amber-900">No Resume Uploaded Yet</h3>
+        <p class="text-xs text-amber-700 mt-1">Upload a PDF or Word document below to attach to your profile.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Upload / Replace Form Card -->
+  <div class="app-card p-6 sm:p-8">
+    <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+      <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i> {{ 'Replace Current Resume' if profile.resume_path else 'Upload New Resume' }}
+    </h2>
+
+    <form action="{{ url_for('candidate.resume') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+      <div class="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center hover:border-blue-400 transition bg-slate-50/50">
+        <i class="fa-solid fa-file-arrow-up text-4xl text-slate-400 mb-3"></i>
+        <label for="resume-input" class="block text-sm font-semibold text-slate-800 cursor-pointer hover:text-blue-600">
+          Click to choose a file
+        </label>
+        <p class="text-xs text-slate-500 mt-1">Supports PDF, DOC, and DOCX formats (Up to 16MB)</p>
+        <input id="resume-input" type="file" name="resume" accept=".pdf,.doc,.docx" required class="mt-4 text-xs mx-auto block text-slate-500">
+      </div>
+
+      <div class="flex items-center justify-end gap-3">
+        <a href="{{ url_for('candidate.dashboard') }}" class="btn btn-secondary btn-sm">Back to Dashboard</a>
+        <button type="submit" class="btn btn-primary btn-sm px-5">Upload Resume</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

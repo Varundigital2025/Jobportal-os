@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Candidate Dashboard — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <a href="{{ url_for('candidate.settings') }}" class="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-center overflow-hidden shrink-0 group relative" title="Update Profile Picture">
+          {% if user.profile_photo %}
+            <img src="{{ url_for('serve_profile_photo', filename=user.profile_photo) }}" alt="{{ user.name }}" class="w-full h-full object-cover">
+          {% else %}
+            <i class="fa-solid fa-user text-2xl text-slate-400 group-hover:text-blue-600 transition"></i>
+          {% endif %}
+        </a>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Welcome back, {{ user.name }}!
+          </h1>
+          <p class="text-sm text-slate-500 mt-1">
+            {{ profile.headline or 'Manage your applications, saved opportunities, and profile progress' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Actions Group -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-magnifying-glass mr-1"></i> Search Jobs
+        </a>
+        <a href="{{ url_for('candidate.profile') }}" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-user-pen mr-1"></i> Edit Profile
+        </a>
+        <a href="{{ url_for('candidate.settings') }}" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-gear mr-1"></i> Settings
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  
+  <!-- ==================== TOP METRIC STATS ==================== -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    
+    <!-- Stat 1: Applications Sent -->
+    <div class="app-card p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+        <i class="fa-solid fa-paper-plane"></i>
+      </div>
+      <div>
+        <span class="text-xs text-slate-400 block font-medium uppercase tracking-wider">Applied</span>
+        <span class="text-2xl font-bold text-slate-900">{{ total_applications }}</span>
+      </div>
+    </div>
+
+    <!-- Stat 2: Under Review -->
+    <div class="app-card p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+        <i class="fa-solid fa-hourglass-half"></i>
+      </div>
+      <div>
+        <span class="text-xs text-slate-400 block font-medium uppercase tracking-wider">Under Review</span>
+        <span class="text-2xl font-bold text-slate-900">{{ under_review_count }}</span>
+      </div>
+    </div>
+
+    <!-- Stat 3: Shortlisted -->
+    <div class="app-card p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+        <i class="fa-solid fa-award"></i>
+      </div>
+      <div>
+        <span class="text-xs text-slate-400 block font-medium uppercase tracking-wider">Shortlisted</span>
+        <span class="text-2xl font-bold text-slate-900">{{ shortlisted_count }}</span>
+      </div>
+    </div>
+
+    <!-- Stat 4: Interviews -->
+    <div class="app-card p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shrink-0">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <div>
+        <span class="text-xs text-slate-400 block font-medium uppercase tracking-wider">Interviews</span>
+        <span class="text-2xl font-bold text-slate-900">{{ interview_count }}</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== PROFILE COMPLETION & RESUME STATUS ==================== -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    
+    <!-- Profile Completion Card (2 cols) -->
+    <div class="md:col-span-2 app-card p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-blue-600"></i>
+            <h3 class="text-base font-bold text-slate-900">Profile Completion</h3>
+          </div>
+          <span class="text-sm font-bold text-blue-600">{{ profile.completion_percentage }}%</span>
+        </div>
+
+        <p class="text-xs text-slate-500 mb-4">
+          A complete profile increases recruiter response rates by up to 3x. Add your skills, work experience, and portfolio.
+        </p>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+          <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width: {{ profile.completion_percentage }}%"></div>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+        <span class="text-xs text-slate-500">
+          {% if profile.completion_percentage < 80 %}
+            <i class="fa-solid fa-circle-exclamation text-amber-500 mr-1"></i> Missing details: Headline, bio, or skills
+          {% else %}
+            <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Excellent profile depth!
+          {% endif %}
+        </span>
+        <a href="{{ url_for('candidate.profile') }}" class="btn btn-outline-primary btn-sm">
+          Update Profile
+        </a>
+      </div>
+    </div>
+
+    <!-- Resume Status Card (1 col) -->
+    <div class="app-card p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-file-pdf text-rose-500 text-lg"></i>
+          <h3 class="text-base font-bold text-slate-900">Resume / CV</h3>
+        </div>
+
+        {% if profile.resume_path %}
+          <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 mb-3">
+            <span class="text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-600"></i> Resume Uploaded
+            </span>
+            <span class="text-[11px] text-slate-500 block truncate mt-1">
+              {{ profile.resume_filename or 'resume.pdf' }}
+            </span>
+          </div>
+        {% else %}
+          <div class="p-3 bg-amber-50 rounded-xl border border-amber-100 mb-3">
+            <span class="text-xs font-semibold text-amber-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> No Resume Uploaded
+            </span>
+            <span class="text-[11px] text-slate-500 block mt-1">
+              Upload your resume to apply for positions quickly.
+            </span>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        {% if profile.resume_path %}
+          <a href="{{ url_for('candidate.download_resume') }}" class="text-xs text-blue-600 hover:underline font-medium">
+            <i class="fa-solid fa-download mr-1"></i> Download
+          </a>
+        {% else %}
+          <span></span>
+        {% endif %}
+        <a href="{{ url_for('candidate.resume') }}" class="btn btn-secondary btn-sm">
+          {{ 'Replace' if profile.resume_path else 'Upload' }} Resume
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== RECENT APPLICATIONS TABLE ==================== -->
+  <div class="app-card p-6 space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Recent Applications</h2>
+        <p class="text-xs text-slate-500">Track the latest review milestones of your submitted applications</p>
+      </div>
+      <a href="{{ url_for('candidate.applications') }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800">
+        View All ({{ total_applications }})
+      </a>
+    </div>
+
+    {% if recent_applications %}
+      <div class="table-responsive">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase tracking-wider">
+              <th class="py-3 px-3 font-semibold">Job Title</th>
+              <th class="py-3 px-3 font-semibold">Company</th>
+              <th class="py-3 px-3 font-semibold">Applied Date</th>
+              <th class="py-3 px-3 font-semibold">Status</th>
+              <th class="py-3 px-3 font-semibold text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for app in recent_applications %}
+              <tr class="hover:bg-slate-50/70 transition">
+                <td class="py-3 px-3 font-semibold text-slate-900">
+                  <a href="{{ url_for('jobs.job_details', job_id=app.job.id) }}" class="hover:text-blue-600">
+                    {{ app.job.title }}
+                  </a>
+                </td>
+                <td class="py-3 px-3 text-slate-600">
+                  {{ app.job.company.company_name if app.job.company else 'Employer' }}
+                </td>
+                <td class="py-3 px-3 text-slate-500 text-xs">
+                  {{ app.applied_at.strftime('%b %d, %Y') }}
+                </td>
+                <td class="py-3 px-3">
+                  <span class="badge {{ app.status_badge_class }}">
+                    {{ app.status }}
+                  </span>
+                </td>
+                <td class="py-3 px-3 text-right">
+                  <a href="{{ url_for('jobs.job_details', job_id=app.job.id) }}" class="btn btn-secondary btn-sm py-1 px-2.5 text-xs">
+                    View Job
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-8">
+        <i class="fa-solid fa-paper-plane text-slate-300 text-3xl mb-2"></i>
+        <h4 class="text-sm font-semibold text-slate-700">No applications sent yet</h4>
+        <p class="text-xs text-slate-500 mt-1">Start browsing open roles to submit your first application.</p>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary btn-sm mt-3">Search Jobs</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

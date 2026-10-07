@@ -1,0 +1,73 @@
+{# Reusable Job Card Component #}
+<div class="app-card app-card-hover p-5 flex flex-col justify-between h-full relative group">
+  <div>
+    <!-- Top Row: Company Logo & Action / Save Button -->
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+          {% if job.company and job.company.logo %}
+            <img src="{{ url_for('serve_company_logo', filename=job.company.logo) }}" alt="{{ job.company.company_name }}" class="w-full h-full object-cover">
+          {% else %}
+            <span class="font-bold text-slate-600 text-lg">{{ (job.company.company_name[0] if job.company else job.title[0]) | upper }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <span class="text-xs font-medium text-slate-500 line-clamp-1">
+            {{ job.company.company_name if job.company else 'Verified Employer' }}
+          </span>
+          <h3 class="text-base font-semibold text-slate-900 group-hover:text-blue-600 transition line-clamp-1">
+            <a href="{{ url_for('jobs.job_details', job_id=job.id) }}">
+              {{ job.title }}
+            </a>
+          </h3>
+        </div>
+      </div>
+
+      <!-- Save / Bookmark Button (Candidate Only or Login Prompt) -->
+      {% if current_user and current_user.role == 'candidate' %}
+        <button type="button"
+                data-job-id="{{ job.id }}"
+                class="btn-save-job p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition shrink-0 {{ 'saved-active' if (job.id in saved_job_ids or is_saved) else '' }}"
+                title="Save Job">
+          <i class="save-icon fa-bookmark {{ 'fa-solid text-rose-500' if (job.id in saved_job_ids or is_saved) else 'fa-regular' }}"></i>
+        </button>
+      {% endif %}
+    </div>
+
+    <!-- Location & Category Meta -->
+    <div class="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-500 mb-3.5">
+      <span class="flex items-center gap-1">
+        <i class="fa-solid fa-location-dot text-slate-400"></i> {{ job.location }}
+      </span>
+      <span class="flex items-center gap-1">
+        <i class="fa-solid fa-layer-group text-slate-400"></i> {{ job.category }}
+      </span>
+    </div>
+
+    <!-- Tags Row: Job Type, Work Mode, Experience -->
+    <div class="flex flex-wrap gap-1.5 mb-4">
+      <span class="badge badge-primary">{{ job.job_type }}</span>
+      <span class="badge badge-neutral">{{ job.work_mode }}</span>
+      {% if job.experience_level %}
+        <span class="badge badge-neutral">{{ job.experience_level }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Bottom Row: Salary, Date & View Button -->
+  <div class="pt-3 border-t border-slate-100 flex items-center justify-between mt-auto">
+    <div>
+      <div class="text-xs text-slate-400">Salary</div>
+      <div class="text-sm font-bold text-slate-800">{{ job.formatted_salary }}</div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-slate-400 hidden sm:inline" title="{{ job.created_at.strftime('%Y-%m-%d') }}">
+        {{ job.created_at.strftime('%b %d') }}
+      </span>
+      <a href="{{ url_for('jobs.job_details', job_id=job.id) }}" class="btn btn-outline-primary btn-sm">
+        View Job
+      </a>
+    </div>
+  </div>
+</div>

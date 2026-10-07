@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Create New User — Admin Portal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-2 text-xs text-slate-500 mb-1">
+          <a href="{{ url_for('admin.users') }}" class="hover:text-blue-600 transition flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> Platform Users
+          </a>
+          <span>/</span>
+          <span class="text-slate-700 font-semibold">Create User</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Create Platform Account</h1>
+        <p class="text-sm text-slate-500 mt-1">Register and provision a candidate, employer, or administrator account directly into the database</p>
+      </div>
+      <a href="{{ url_for('admin.users') }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-users mr-1"></i> Back to Users
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form action="{{ url_for('admin.create_user') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+    
+    <!-- ==================== 1. ROLE SELECTION ==================== -->
+    <div class="app-card p-6 sm:p-8 space-y-4">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-id-badge text-blue-600"></i> Account Role
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Candidate Option -->
+        <label class="cursor-pointer border-2 rounded-2xl p-4 flex flex-col justify-between transition hover:border-blue-400 bg-white shadow-xs has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/40">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <input type="radio" name="role" value="candidate" class="role-radio text-blue-600 focus:ring-blue-500" {{ 'checked' if not form_data.get('role') or form_data.get('role') == 'candidate' else '' }}>
+          </div>
+          <div>
+            <span class="text-sm font-bold text-slate-900 block">Candidate</span>
+            <span class="text-xs text-slate-500 mt-0.5 block">Job seeker searching and applying for roles</span>
+          </div>
+        </label>
+
+        <!-- Employer Option -->
+        <label class="cursor-pointer border-2 rounded-2xl p-4 flex flex-col justify-between transition hover:border-indigo-400 bg-white shadow-xs has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50/40">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-building"></i>
+            </div>
+            <input type="radio" name="role" value="employer" class="role-radio text-indigo-600 focus:ring-indigo-500" {{ 'checked' if form_data.get('role') == 'employer' else '' }}>
+          </div>
+          <div>
+            <span class="text-sm font-bold text-slate-900 block">Employer</span>
+            <span class="text-xs text-slate-500 mt-0.5 block">Company hiring manager posting job listings</span>
+          </div>
+        </label>
+
+        <!-- Admin Option -->
+        <label class="cursor-pointer border-2 rounded-2xl p-4 flex flex-col justify-between transition hover:border-rose-400 bg-white shadow-xs has-[:checked]:border-rose-600 has-[:checked]:bg-rose-50/40">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <input type="radio" name="role" value="admin" class="role-radio text-rose-600 focus:ring-rose-500" {{ 'checked' if form_data.get('role') == 'admin' else '' }}>
+          </div>
+          <div>
+            <span class="text-sm font-bold text-slate-900 block">Administrator</span>
+            <span class="text-xs text-slate-500 mt-0.5 block">Full platform & user moderation access</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- ==================== 2. PRIMARY ACCOUNT CREDENTIALS ==================== -->
+    <div class="app-card p-6 sm:p-8 space-y-6">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-user-lock text-blue-600"></i> Account Credentials & Profile
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="user-name">Full Name <span class="text-rose-500">*</span></label>
+          <input type="text" id="user-name" name="name" value="{{ form_data.get('name', '') }}" required placeholder="e.g. John Doe" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="user-email">Email Address <span class="text-rose-500">*</span></label>
+          <input type="email" id="user-email" name="email" value="{{ form_data.get('email', '') }}" required placeholder="e.g. john.doe@example.com" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="user-password">Password <span class="text-rose-500">*</span></label>
+          <div class="relative">
+            <input type="password" id="user-password" name="password" required minlength="6" placeholder="Minimum 6 characters" class="form-control text-sm pr-10">
+            <button type="button" class="password-toggle absolute right-3 top-2.5 text-slate-400 hover:text-slate-600" data-target="#user-password">
+              <i class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label" for="user-phone">Phone Number</label>
+          <input type="tel" id="user-phone" name="phone" value="{{ form_data.get('phone', '') }}" placeholder="+1 (555) 000-0000" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="user-loc">Location / City</label>
+          <input type="text" id="user-loc" name="location" value="{{ form_data.get('location', '') }}" placeholder="e.g. San Francisco, CA" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="user-status">Account Status</label>
+          <select id="user-status" name="is_active" class="form-control text-sm">
+            <option value="1" {{ 'selected' if form_data.get('is_active') != '0' else '' }}>Active (Can log in immediately)</option>
+            <option value="0" {{ 'selected' if form_data.get('is_active') == '0' else '' }}>Deactivated (Access disabled)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Profile Photo Upload -->
+      <div class="pt-2">
+        <label class="form-label text-xs font-semibold text-slate-700">Profile Photo (Optional)</label>
+        <input type="file" name="profile_photo" accept="image/*"
+               class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        <span class="text-[11px] text-slate-400 mt-1 block">JPG, PNG, WEBP, GIF, JFIF, BMP (Max 5MB)</span>
+      </div>
+    </div>
+
+    <!-- ==================== 3. CANDIDATE PROFILE DETAILS ==================== -->
+    <div id="candidate-section" class="app-card p-6 sm:p-8 space-y-6">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-briefcase text-blue-600"></i> Candidate Details & Resume
+      </h2>
+
+      <div>
+        <label class="form-label" for="cand-headline">Professional Headline</label>
+        <input type="text" id="cand-headline" name="headline" value="{{ form_data.get('headline', '') }}"
+               placeholder="e.g. Senior Backend Engineer | Python & Distributed Systems" class="form-control text-sm">
+      </div>
+
+      <div>
+        <label class="form-label" for="cand-bio">Summary / Bio</label>
+        <textarea id="cand-bio" name="bio" rows="3" placeholder="Brief summary of background and career aspirations..." class="form-control text-sm">{{ form_data.get('bio', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="cand-skills">Skills (Comma-separated)</label>
+        <input type="text" id="cand-skills" name="skills" value="{{ form_data.get('skills', '') }}"
+               placeholder="e.g. Python, SQL, Docker, React, AWS" class="form-control text-sm">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="cand-exp">Work Experience Summary</label>
+          <input type="text" id="cand-exp" name="experience" value="{{ form_data.get('experience', '') }}"
+                 placeholder="e.g. 5+ years building cloud services" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="cand-qual">Highest Qualification</label>
+          <input type="text" id="cand-qual" name="qualification" value="{{ form_data.get('qualification', '') }}"
+                 placeholder="e.g. Master of Science / Bachelor of Science" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="cand-edu">Education & University</label>
+          <input type="text" id="cand-edu" name="education" value="{{ form_data.get('education', '') }}"
+                 placeholder="e.g. B.S. in Computer Science - Stanford" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="cand-linkedin">LinkedIn Profile URL</label>
+          <input type="url" id="cand-linkedin" name="linkedin_url" value="{{ form_data.get('linkedin_url', '') }}"
+                 placeholder="https://linkedin.com/in/username" class="form-control text-sm">
+        </div>
+      </div>
+
+      <!-- Candidate Resume Upload -->
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+        <label class="form-label text-xs font-bold text-slate-700" for="cand-resume">
+          <i class="fa-solid fa-file-pdf text-rose-500 mr-1"></i> Attach Candidate Resume (Optional)
+        </label>
+        <input type="file" id="cand-resume" name="resume" accept=".pdf,.doc,.docx,.rtf,.txt"
+               class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        <span class="text-[11px] text-slate-400 mt-1 block">Supported formats: PDF, DOC, DOCX, RTF, TXT (Max 16MB). Saved directly to candidate's profile in database.</span>
+      </div>
+    </div>
+
+    <!-- ==================== 4. EMPLOYER PROFILE DETAILS ==================== -->
+    <div id="employer-section" class="app-card p-6 sm:p-8 space-y-6 hidden">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-building text-indigo-600"></i> Employer & Company Details
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="emp-comp-name">Company Name</label>
+          <input type="text" id="emp-comp-name" name="company_name" value="{{ form_data.get('company_name', '') }}"
+                 placeholder="e.g. Acme Corporation" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="emp-industry">Industry</label>
+          <select id="emp-industry" name="industry" class="form-control text-sm">
+            <option value="Software & Engineering">Software & Engineering</option>
+            <option value="Technology & Platform">Technology & Platform</option>
+            <option value="Data & Analytics">Data & Analytics</option>
+            <option value="Product & Design">Product & Design</option>
+            <option value="Marketing & Growth">Marketing & Growth</option>
+            <option value="Finance & Accounting">Finance & Accounting</option>
+            <option value="Human Resources">Human Resources</option>
+            <option value="Healthcare & Biotech">Healthcare & Biotech</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="emp-size">Company Size</label>
+          <select id="emp-size" name="company_size" class="form-control text-sm">
+            <option value="1-10">1-10 Employees</option>
+            <option value="11-50" selected>11-50 Employees</option>
+            <option value="51-200">51-200 Employees</option>
+            <option value="201-500">201-500 Employees</option>
+            <option value="500+">500+ Employees</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="emp-website">Company Website</label>
+          <input type="url" id="emp-website" name="website" value="{{ form_data.get('website', '') }}"
+                 placeholder="https://example.com" class="form-control text-sm">
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label" for="emp-desc">Company Description</label>
+        <textarea id="emp-desc" name="company_description" rows="3" placeholder="Overview of the company..." class="form-control text-sm">{{ form_data.get('company_description', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label text-xs font-semibold text-slate-700">Company Logo (Optional)</label>
+        <input type="file" name="company_logo" accept="image/*"
+               class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end gap-4">
+      <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary px-6 shadow-sm">
+        <i class="fa-solid fa-user-check mr-1.5"></i> Create User Account
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<!-- JavaScript to toggle role sections -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const roleRadios = document.querySelectorAll('.role-radio');
+  const candidateSection = document.getElementById('candidate-section');
+  const employerSection = document.getElementById('employer-section');
+
+  function updateRoleVisibility() {
+    let selected = 'candidate';
+    roleRadios.forEach(r => {
+      if (r.checked) selected = r.value;
+    });
+
+    if (selected === 'candidate') {
+      candidateSection.classList.remove('hidden');
+      employerSection.classList.add('hidden');
+    } else if (selected === 'employer') {
+      candidateSection.classList.add('hidden');
+      employerSection.classList.remove('hidden');
+    } else {
+      // admin
+      candidateSection.classList.add('hidden');
+      employerSection.classList.add('hidden');
+    }
+  }
+
+  roleRadios.forEach(r => {
+    r.addEventListener('change', updateRoleVisibility);
+  });
+
+  updateRoleVisibility();
+});
+</script>
+{% endblock %}

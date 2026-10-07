@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Search Jobs — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Explore Job Opportunities</h1>
+        <p class="text-slate-500 text-sm mt-1">
+          Showing <span class="font-semibold text-slate-900">{{ total_count }}</span> available {{ 'position' if total_count == 1 else 'positions' }} matching your criteria
+        </p>
+      </div>
+
+      <!-- Quick Search Form Bar on top -->
+      <form action="{{ url_for('jobs.list_jobs') }}" method="GET" class="flex items-center gap-2 max-w-xl w-full">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400"></i>
+          <input type="text" name="q" value="{{ keyword }}" placeholder="Search title, skills..."
+                 class="form-control pl-9 text-sm">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm px-4">Search</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    
+    <!-- ==================== FILTERS SIDEBAR ==================== -->
+    <aside class="lg:col-span-1">
+      <div class="app-card p-5 sticky top-20">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+          <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-blue-600"></i> Filters
+          </h2>
+          <a href="{{ url_for('jobs.list_jobs') }}" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+            Reset all
+          </a>
+        </div>
+
+        <form action="{{ url_for('jobs.list_jobs') }}" method="GET" class="space-y-5">
+          <!-- Preserve keyword search -->
+          <input type="hidden" name="q" value="{{ keyword }}">
+
+          <!-- Location Filter -->
+          <div>
+            <label class="form-label text-xs uppercase tracking-wider text-slate-500 font-semibold">Location</label>
+            <div class="relative">
+              <i class="fa-solid fa-location-dot absolute left-3 top-3 text-slate-400 text-xs"></i>
+              <input type="text" name="location" value="{{ location }}" placeholder="City, Remote, State"
+                     class="form-control pl-8 text-xs">
+            </div>
+          </div>
+
+          <!-- Category Filter -->
+          <div>
+            <label class="form-label text-xs uppercase tracking-wider text-slate-500 font-semibold">Category</label>
+            <select name="category" class="form-control text-xs">
+              <option value="">All Categories</option>
+              {% for cat in categories %}
+                <option value="{{ cat }}" {{ 'selected' if selected_category == cat else '' }}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Job Type Filter -->
+          <div>
+            <label class="form-label text-xs uppercase tracking-wider text-slate-500 font-semibold">Job Type</label>
+            <select name="job_type" class="form-control text-xs">
+              <option value="">All Job Types</option>
+              {% for jt in job_types %}
+                <option value="{{ jt }}" {{ 'selected' if selected_job_type == jt else '' }}>{{ jt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Work Mode Filter -->
+          <div>
+            <label class="form-label text-xs uppercase tracking-wider text-slate-500 font-semibold">Work Mode</label>
+            <select name="work_mode" class="form-control text-xs">
+              <option value="">All Work Modes</option>
+              {% for wm in work_modes %}
+                <option value="{{ wm }}" {{ 'selected' if selected_work_mode == wm else '' }}>{{ wm }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Experience Level Filter -->
+          <div>
+            <label class="form-label text-xs uppercase tracking-wider text-slate-500 font-semibold">Experience Level</label>
+            <select name="experience_level" class="form-control text-xs">
+              <option value="">All Experience Levels</option>
+              {% for exp in experience_levels %}
+                <option value="{{ exp }}" {{ 'selected' if selected_experience == exp else '' }}>{{ exp }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Minimum Salary Filter -->
+          <div>
+            <label class="form-label text-xs uppercase tracking-wider text-slate-500 font-semibold">Minimum Salary ($)</label>
+            <input type="number" name="min_salary" value="{{ min_salary }}" placeholder="e.g. 80000" step="5000"
+                   class="form-control text-xs">
+          </div>
+
+          <!-- Sort Order -->
+          <div>
+            <label class="form-label text-xs uppercase tracking-wider text-slate-500 font-semibold">Sort By</label>
+            <select name="sort" class="form-control text-xs">
+              <option value="newest" {{ 'selected' if sort_by == 'newest' else '' }}>Newest First</option>
+              <option value="salary" {{ 'selected' if sort_by == 'salary' else '' }}>Highest Salary</option>
+              <option value="title" {{ 'selected' if sort_by == 'title' else '' }}>Job Title (A-Z)</option>
+              <option value="oldest" {{ 'selected' if sort_by == 'oldest' else '' }}>Oldest First</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-full btn-sm">
+            Apply Filters
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- ==================== JOBS RESULTS GRID ==================== -->
+    <main class="lg:col-span-3">
+      {% if jobs %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+          {% for job in jobs %}
+            {% include "components/job_card.html" %}
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% include "components/pagination.html" %}
+
+      {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+          <div class="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mx-auto mb-4 text-2xl">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">No jobs match your search criteria</h3>
+          <p class="text-sm text-slate-500 max-w-md mx-auto mt-2 leading-relaxed">
+            Try adjusting your keyword spelling, broadening your location, or removing some of the active filters.
+          </p>
+          <div class="mt-6 flex justify-center gap-3">
+            <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary btn-sm">
+              Clear All Filters
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </main>
+
+  </div>
+</div>
+{% endblock %}

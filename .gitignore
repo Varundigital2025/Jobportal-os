@@ -1,0 +1,16 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+database.db
+instance/
+uploads/resumes/*
+!uploads/resumes/.gitkeep
+uploads/profile_photos/*
+!uploads/profile_photos/.gitkeep
+uploads/company_logos/*
+!uploads/company_logos/.gitkeep
+.vscode/
+.idea/

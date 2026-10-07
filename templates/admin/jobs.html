@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Platform Jobs — Admin Portal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Platform Job Moderation</h1>
+        <p class="text-sm text-slate-500 mt-1">Review listings, enforce community guidelines, and moderate postings</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <form action="{{ url_for('admin.jobs') }}" method="GET" class="flex flex-wrap items-center gap-2">
+          <input type="text" name="q" value="{{ search_query }}" placeholder="Job title..." class="form-control text-xs py-1.5">
+
+          <select name="status" onchange="this.form.submit()" class="form-control text-xs py-1.5 px-3">
+            <option value="">All Statuses</option>
+            <option value="Open" {{ 'selected' if selected_status == 'Open' else '' }}>Open</option>
+            <option value="Closed" {{ 'selected' if selected_status == 'Closed' else '' }}>Closed</option>
+            <option value="Draft" {{ 'selected' if selected_status == 'Draft' else '' }}>Draft</option>
+          </select>
+
+          <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+        </form>
+
+        <a href="{{ url_for('admin.create_job') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-plus mr-1"></i> Post New Job
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="app-card overflow-hidden">
+    {% if jobs %}
+      <div class="table-responsive">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-slate-50/70 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
+              <th class="py-3.5 px-5 font-semibold">Job Title</th>
+              <th class="py-3.5 px-5 font-semibold">Employer / Company</th>
+              <th class="py-3.5 px-5 font-semibold">Category</th>
+              <th class="py-3.5 px-5 font-semibold">Status</th>
+              <th class="py-3.5 px-5 font-semibold">Applicants</th>
+              <th class="py-3.5 px-5 font-semibold text-right">Moderation Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for j in jobs %}
+              <tr class="hover:bg-slate-50/70 transition">
+                <td class="py-4 px-5">
+                  <div class="font-bold text-slate-900">
+                    <a href="{{ url_for('jobs.job_details', job_id=j.id) }}" class="hover:text-blue-600">
+                      {{ j.title }}
+                    </a>
+                  </div>
+                  <span class="text-xs text-slate-400">{{ j.location }} • {{ j.job_type }}</span>
+                </td>
+
+                <td class="py-4 px-5 text-xs text-slate-700">
+                  <span class="font-semibold block">{{ j.company.company_name if j.company else 'Unknown' }}</span>
+                  <span class="text-slate-400">{{ j.employer.email }}</span>
+                </td>
+
+                <td class="py-4 px-5 text-xs text-slate-600">
+                  {{ j.category }}
+                </td>
+
+                <td class="py-4 px-5">
+                  <span class="badge {{ 'badge-success' if j.status == 'Open' else ('badge-neutral' if j.status == 'Draft' else 'badge-danger') }}">
+                    {{ j.status }}
+                  </span>
+                </td>
+
+                <td class="py-4 px-5 text-xs font-bold text-slate-700">
+                  {{ j.applicant_count }}
+                </td>
+
+                <td class="py-4 px-5 text-right space-x-1 whitespace-nowrap">
+                  <!-- View Live -->
+                  <a href="{{ url_for('jobs.job_details', job_id=j.id) }}" class="btn btn-secondary btn-sm py-1 px-2.5 text-xs" title="View Listing">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  </a>
+
+                  <!-- Toggle / Change Status Dropdown Form -->
+                  <form action="{{ url_for('admin.change_job_status', job_id=j.id) }}" method="POST" class="inline">
+                    <input type="hidden" name="status" value="{{ 'Closed' if j.status == 'Open' else 'Open' }}">
+                    <button type="submit" class="btn btn-secondary btn-sm py-1 px-2.5 text-xs" title="{{ 'Close Job' if j.status == 'Open' else 'Re-open Job' }}">
+                      <i class="fa-solid {{ 'fa-lock text-amber-600' if j.status == 'Open' else 'fa-lock-open text-emerald-600' }}"></i>
+                    </button>
+                  </form>
+
+                  <!-- Delete Inappropriate Job -->
+                  <form action="{{ url_for('admin.delete_job', job_id=j.id) }}" method="POST" class="inline">
+                    <button type="submit" data-confirm="Are you sure you want to permanently delete this job posting?"
+                            class="btn btn-secondary btn-sm py-1 px-2.5 text-xs text-rose-600 hover:bg-rose-50" title="Delete Job">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% include "components/pagination.html" %}
+
+    {% else %}
+      <div class="p-12 text-center">
+        <i class="fa-solid fa-briefcase text-slate-300 text-4xl mb-3"></i>
+        <h3 class="text-base font-bold text-slate-900">No jobs found</h3>
+        <p class="text-xs text-slate-500 mt-1">Try modifying your filter settings.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

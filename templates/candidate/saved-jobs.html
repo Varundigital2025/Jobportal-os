@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Jobs — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Saved Jobs</h1>
+    <p class="text-sm text-slate-500 mt-1">Bookmarked positions you want to review or apply to later</p>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  {% if saved_jobs %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for item in saved_jobs %}
+        {% set job = item.job %}
+        <div class="app-card app-card-hover p-5 flex flex-col justify-between h-full">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                  {% if job.company and job.company.logo %}
+                    <img src="{{ url_for('serve_company_logo', filename=job.company.logo) }}" alt="{{ job.company.company_name }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <span class="font-bold text-slate-600 text-lg">{{ (job.company.company_name[0] if job.company else job.title[0]) | upper }}</span>
+                  {% endif %}
+                </div>
+                <div>
+                  <span class="text-xs font-medium text-slate-500 line-clamp-1">
+                    {{ job.company.company_name if job.company else 'Verified Employer' }}
+                  </span>
+                  <h3 class="text-base font-semibold text-slate-900 line-clamp-1">
+                    <a href="{{ url_for('jobs.job_details', job_id=job.id) }}" class="hover:text-blue-600">
+                      {{ job.title }}
+                    </a>
+                  </h3>
+                </div>
+              </div>
+
+              <!-- Unsave Form Button -->
+              <form action="{{ url_for('jobs.save_job', job_id=job.id) }}" method="POST">
+                <button type="submit" class="p-2 rounded-lg text-rose-500 hover:bg-rose-50 transition" title="Remove from saved">
+                  <i class="fa-solid fa-bookmark"></i>
+                </button>
+              </form>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-500 mb-3">
+              <span><i class="fa-solid fa-location-dot text-slate-400"></i> {{ job.location }}</span>
+              <span><i class="fa-solid fa-layer-group text-slate-400"></i> {{ job.category }}</span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 mb-4">
+              <span class="badge badge-primary">{{ job.job_type }}</span>
+              <span class="badge badge-neutral">{{ job.work_mode }}</span>
+              {% if job.status != 'Open' %}
+                <span class="badge badge-danger">Closed</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between mt-auto">
+            <span class="text-sm font-bold text-slate-800">{{ job.formatted_salary }}</span>
+            <a href="{{ url_for('jobs.job_details', job_id=job.id) }}" class="btn btn-primary btn-sm">
+              Apply Now
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+      <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4 text-2xl">
+        <i class="fa-regular fa-bookmark"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">You haven't saved any jobs yet</h3>
+      <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+        Bookmark interesting positions while browsing to review and apply to them later.
+      </p>
+      <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary btn-sm mt-5">
+        Explore Jobs
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

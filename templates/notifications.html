@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-bell text-blue-600"></i>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Your Notifications</h1>
+        </div>
+        <p class="text-sm text-slate-500 mt-1">Real-time alerts for application status changes, new applicants, and account events</p>
+      </div>
+
+      {% if notifications %}
+        <form action="{{ url_for('notifications.mark_all_read') }}" method="POST">
+          <button type="submit" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-check-double mr-1 text-blue-600"></i> Mark All as Read
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  {% if notifications %}
+    <div class="app-card divide-y divide-slate-100 overflow-hidden shadow-xs">
+      {% for notif in notifications %}
+        <div class="p-5 flex items-start justify-between gap-4 transition {{ 'bg-blue-50/30' if not notif.is_read else 'bg-white hover:bg-slate-50/60' }}">
+          <div class="flex items-start gap-4">
+            
+            <!-- Notification Icon -->
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-base {{ 'bg-blue-100 text-blue-600' if not notif.is_read else 'bg-slate-100 text-slate-500' }}">
+              {% if 'Status' in notif.title %}
+                <i class="fa-solid fa-timeline"></i>
+              {% elif 'Application' in notif.title %}
+                <i class="fa-solid fa-paper-plane"></i>
+              {% elif 'Security' in notif.title or 'Password' in notif.title %}
+                <i class="fa-solid fa-shield-halved"></i>
+              {% elif 'Registered' in notif.title %}
+                <i class="fa-solid fa-user-plus"></i>
+              {% elif 'Job' in notif.title %}
+                <i class="fa-solid fa-briefcase"></i>
+              {% else %}
+                <i class="fa-solid fa-bell"></i>
+              {% endif %}
+            </div>
+
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold text-slate-900 {{ 'text-blue-900 font-extrabold' if not notif.is_read else '' }}">
+                  {{ notif.title }}
+                </h3>
+                {% if not notif.is_read %}
+                  <span class="w-2 h-2 rounded-full bg-blue-600 inline-block animate-pulse" title="Unread"></span>
+                {% endif %}
+              </div>
+              
+              <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                {{ notif.message }}
+              </p>
+
+              <div class="flex items-center gap-3 mt-2 text-[11px] text-slate-400">
+                <span><i class="fa-regular fa-clock mr-1"></i>{{ notif.time_ago }}</span>
+                {% if notif.link %}
+                  <span>&bull;</span>
+                  <a href="{{ notif.link }}" class="text-blue-600 font-semibold hover:underline">
+                    View Details <i class="fa-solid fa-arrow-right text-[10px] ml-0.5"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Mark As Read Button -->
+          {% if not notif.is_read %}
+            <form action="{{ url_for('notifications.mark_read', notif_id=notif.id) }}" method="POST" class="shrink-0">
+              <button type="submit" class="btn btn-secondary btn-sm py-1 px-2.5 text-xs" title="Mark as read">
+                <i class="fa-solid fa-check text-slate-500 hover:text-emerald-600"></i>
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
+      <div class="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4 text-2xl">
+        <i class="fa-regular fa-bell"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">No notifications yet</h3>
+      <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+        When an application status changes or key platform activity occurs, your alerts will show up here.
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

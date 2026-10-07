@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company.company_name }} — Careers & Company Profile{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 border-b border-slate-200 py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div class="flex items-center gap-5">
+        <div class="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+          {% if company.logo %}
+            <img src="{{ url_for('serve_company_logo', filename=company.logo) }}" alt="{{ company.company_name }}" class="w-full h-full object-cover">
+          {% else %}
+            <span class="font-extrabold text-3xl text-slate-700">{{ company.company_name[0] | upper }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">{{ company.company_name }}</h1>
+          <p class="text-sm text-slate-500 mt-1">{{ company.industry or 'Technology & Services' }}</p>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mt-2">
+            {% if company.location %}<span><i class="fa-solid fa-location-dot mr-1"></i>{{ company.location }}</span>{% endif %}
+            {% if company.company_size %}<span><i class="fa-solid fa-users mr-1"></i>{{ company.company_size }} Employees</span>{% endif %}
+            {% if company.website %}
+              <a href="{{ company.website }}" target="_blank" class="text-blue-600 hover:underline">
+                <i class="fa-solid fa-globe mr-1"></i>{{ company.website }}
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span class="badge badge-primary text-sm px-4 py-1.5">
+          {{ jobs | length }} Open {{ 'Position' if (jobs | length) == 1 else 'Positions' }}
+        </span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Left Column: Open Jobs -->
+    <div class="lg:col-span-2 space-y-6">
+      <h2 class="text-xl font-bold text-slate-900">Open Positions at {{ company.company_name }}</h2>
+      
+      {% if jobs %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {% for job in jobs %}
+            {% include "components/job_card.html" %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+          <p class="text-sm text-slate-500">No active job openings at this time.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Company Overview -->
+    <aside class="space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+        <h3 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-2">Overview</h3>
+        <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line">
+          {{ company.description or 'No overview description available for this organization.' }}
+        </p>
+      </div>
+    </aside>
+
+  </div>
+</div>
+{% endblock %}

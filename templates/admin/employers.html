@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Employers — Admin Portal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Registered Employers & Companies</h1>
+        <p class="text-sm text-slate-500 mt-1">Review verified employers, company details, and job posting counts</p>
+      </div>
+
+      <form action="{{ url_for('admin.employers') }}" method="GET" class="flex items-center gap-2">
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search company name..." class="form-control text-xs py-1.5">
+        <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="app-card overflow-hidden">
+    {% if companies %}
+      <div class="table-responsive">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-slate-50/70 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
+              <th class="py-3.5 px-5 font-semibold">Company</th>
+              <th class="py-3.5 px-5 font-semibold">Account Owner</th>
+              <th class="py-3.5 px-5 font-semibold">Industry</th>
+              <th class="py-3.5 px-5 font-semibold">Location</th>
+              <th class="py-3.5 px-5 font-semibold">Active Jobs</th>
+              <th class="py-3.5 px-5 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for c in companies %}
+              <tr class="hover:bg-slate-50/70 transition">
+                <td class="py-4 px-5">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center shrink-0 overflow-hidden">
+                      {% if c.logo %}
+                        <img src="{{ url_for('serve_company_logo', filename=c.logo) }}" alt="{{ c.company_name }}" class="w-full h-full object-cover">
+                      {% else %}
+                        {{ c.company_name[0] | upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <span class="font-bold text-slate-900 block">{{ c.company_name }}</span>
+                      {% if c.website %}
+                        <a href="{{ c.website }}" target="_blank" class="text-xs text-blue-600 hover:underline">Website</a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </td>
+
+                <td class="py-4 px-5 text-xs text-slate-700">
+                  <span class="font-semibold block">{{ c.employer.name }}</span>
+                  <span class="text-slate-400">{{ c.employer.email }}</span>
+                </td>
+
+                <td class="py-4 px-5 text-xs text-slate-600">
+                  {{ c.industry or 'Technology' }}
+                </td>
+
+                <td class="py-4 px-5 text-xs text-slate-600">
+                  {{ c.location or 'Global' }}
+                </td>
+
+                <td class="py-4 px-5">
+                  <span class="badge badge-primary font-bold">
+                    {{ c.active_jobs_count }} Roles
+                  </span>
+                </td>
+
+                <td class="py-4 px-5 text-right">
+                  <a href="{{ url_for('jobs.company_details', company_id=c.id) }}" class="btn btn-secondary btn-sm py-1 px-2.5 text-xs">
+                    View
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-12 text-center">
+        <i class="fa-solid fa-building text-slate-300 text-4xl mb-3"></i>
+        <h3 class="text-base font-bold text-slate-900">No companies found</h3>
+        <p class="text-xs text-slate-500 mt-1">No employer records match your search criteria.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

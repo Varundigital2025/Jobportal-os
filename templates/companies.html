@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Hiring Companies Directory — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-10 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Hiring Companies</h1>
+    <p class="text-slate-500 text-sm mt-1">Discover verified companies and explore active openings</p>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  {% if companies %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for company in companies %}
+        <div class="app-card app-card-hover p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                {% if company.logo %}
+                  <img src="{{ url_for('serve_company_logo', filename=company.logo) }}" alt="{{ company.company_name }}" class="w-full h-full object-cover">
+                {% else %}
+                  <span class="font-extrabold text-xl text-slate-700">{{ company.company_name[0] | upper }}</span>
+                {% endif %}
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-base font-bold text-slate-900 truncate">
+                  <a href="{{ url_for('jobs.company_details', company_id=company.id) }}" class="hover:text-blue-600 transition">
+                    {{ company.company_name }}
+                  </a>
+                </h3>
+                <span class="text-xs text-slate-500 block truncate">{{ company.industry or 'Technology Services' }}</span>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-600 line-clamp-3 mb-4 leading-relaxed">
+              {{ company.description or 'No company description provided yet.' }}
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="badge badge-primary font-semibold">
+              {{ company.active_jobs_count }} Open {{ 'Role' if company.active_jobs_count == 1 else 'Roles' }}
+            </span>
+            <a href="{{ url_for('jobs.company_details', company_id=company.id) }}" class="btn btn-secondary btn-sm">
+              View Profile
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+      <i class="fa-solid fa-building text-slate-300 text-4xl mb-3"></i>
+      <h3 class="text-base font-semibold text-slate-800">No companies listed yet</h3>
+      <p class="text-xs text-slate-500 mt-1">Companies will appear here once employers register.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Log In — JobPortal{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-16rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full">
+    
+    <!-- Header Title -->
+    <div class="text-center mb-8">
+      <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto mb-3 shadow-md">
+        <i class="fa-solid fa-arrow-right-to-bracket text-xl"></i>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Welcome Back</h1>
+      <p class="text-sm text-slate-500 mt-1">Sign in to your candidate or employer account</p>
+    </div>
+
+    <!-- Login Form Card -->
+    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-md">
+      <form action="{{ url_for('auth.login', next=request.args.get('next')) }}" method="POST" class="space-y-5">
+        
+        <!-- Email Input -->
+        <div>
+          <label class="form-label" for="login-email">Email Address</label>
+          <div class="relative">
+            <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+            <input type="email" id="login-email" name="email" value="{{ email or '' }}" required autofocus
+                   placeholder="you@example.com" class="form-control pl-9 text-sm">
+          </div>
+        </div>
+
+        <!-- Password Input with Toggle -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="form-label mb-0" for="login-password">Password</label>
+            <a href="{{ url_for('auth.forgot_password') }}" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+              Forgot password?
+            </a>
+          </div>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+            <input type="password" id="login-password" name="password" required
+                   placeholder="••••••••" class="form-control pl-9 pr-10 text-sm">
+            <button type="button" class="password-toggle absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                    data-target="#login-password" title="Toggle visibility">
+              <i class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="flex items-center">
+          <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
+          <label for="remember" class="ml-2 text-xs text-slate-600 font-medium">Keep me logged in on this computer</label>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary w-full py-2.5 font-semibold text-sm rounded-xl shadow-xs">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Testing Credentials Quick Callout -->
+      <div class="mt-6 pt-5 border-t border-slate-100 text-xs text-slate-500 space-y-1 bg-slate-50 p-3 rounded-xl">
+        <span class="font-bold text-slate-700 block mb-1">Quick Demo Credentials:</span>
+        <div><strong>Admin:</strong> <code>admin@jobportal.local</code> / <code>AdminPassword@2026</code></div>
+        <div><strong>Employer:</strong> <code>alex.apex@example.com</code> / <code>Employer@123</code></div>
+        <div><strong>Candidate:</strong> <code>devon.vance@example.com</code> / <code>Candidate@123</code></div>
+      </div>
+    </div>
+
+    <!-- Registration Link -->
+    <div class="text-center mt-6 text-sm text-slate-600">
+      Don't have an account yet?
+      <a href="{{ url_for('auth.register') }}" class="font-semibold text-blue-600 hover:text-blue-700">
+        Register for free
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

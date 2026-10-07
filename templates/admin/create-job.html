@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Post Job as Administrator — Admin Portal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="badge badge-danger text-xs uppercase tracking-wider">Admin Console</span>
+          <span class="text-xs text-slate-400">&bull; Create Job</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Post a New Job on JobPortal</h1>
+        <p class="text-sm text-slate-500 mt-1">Jobs created here will immediately appear in search and homepage listings for all candidates</p>
+      </div>
+      <a href="{{ url_for('admin.jobs') }}" class="btn btn-secondary btn-sm">
+        Back to Jobs
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form action="{{ url_for('admin.create_job') }}" method="POST" class="space-y-8">
+    
+    <!-- Associated Company / Employer -->
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-building text-blue-600"></i> Company / Organization Association
+      </h2>
+
+      <div>
+        <label class="form-label" for="admin-comp">Assign to Company / Employer</label>
+        <select id="admin-comp" name="company_id" class="form-control text-sm">
+          <option value="">JobPortal Administration (Official Direct Post)</option>
+          {% for comp in companies %}
+            <option value="{{ comp.id }}" {{ 'selected' if form_data.get('company_id') == comp.id else '' }}>
+              {{ comp.company_name }} &bull; Owned by {{ comp.employer.email }}
+            </option>
+          {% endfor %}
+        </select>
+        <span class="text-xs text-slate-400 mt-1.5 block">
+          Select an existing registered company to post on their behalf, or leave as "JobPortal Administration" for official platform postings.
+        </span>
+      </div>
+    </div>
+
+    <!-- Core Role Identity -->
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-briefcase text-blue-600"></i> Role Information
+      </h2>
+
+      <div>
+        <label class="form-label" for="job-title">Job Title <span class="text-rose-500">*</span></label>
+        <input type="text" id="job-title" name="title" value="{{ form_data.get('title', '') }}" required
+               placeholder="e.g. Lead Cloud Architect" class="form-control text-sm">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="job-cat">Category <span class="text-rose-500">*</span></label>
+          <select id="job-cat" name="category" required class="form-control text-sm">
+            <option value="">Select Category</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {{ 'selected' if form_data.get('category') == cat else '' }}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="job-loc">Location <span class="text-rose-500">*</span></label>
+          <input type="text" id="job-loc" name="location" value="{{ form_data.get('location', '') }}" required
+                 placeholder="e.g. Remote or San Francisco, CA" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="job-type">Job Type <span class="text-rose-500">*</span></label>
+          <select id="job-type" name="job_type" required class="form-control text-sm">
+            {% for jt in job_types %}
+              <option value="{{ jt }}" {{ 'selected' if (form_data.get('job_type') == jt or jt == 'Full Time') else '' }}>{{ jt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="job-mode">Work Mode <span class="text-rose-500">*</span></label>
+          <select id="job-mode" name="work_mode" required class="form-control text-sm">
+            {% for wm in work_modes %}
+              <option value="{{ wm }}" {{ 'selected' if (form_data.get('work_mode') == wm or wm == 'Hybrid') else '' }}>{{ wm }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="job-exp">Experience Level</label>
+          <select id="job-exp" name="experience_level" class="form-control text-sm">
+            {% for exp in experience_levels %}
+              <option value="{{ exp }}" {{ 'selected' if form_data.get('experience_level') == exp else '' }}>{{ exp }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="job-deadline">Application Deadline</label>
+          <input type="date" id="job-deadline" name="deadline" value="{{ form_data.get('deadline', '') }}" class="form-control text-sm">
+        </div>
+      </div>
+    </div>
+
+    <!-- Compensation & Skills -->
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-money-bill-wave text-blue-600"></i> Compensation & Skills
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div>
+          <label class="form-label" for="sal-min">Minimum Annual Salary</label>
+          <input type="number" id="sal-min" name="salary_min" value="{{ form_data.get('salary_min', '') }}" placeholder="e.g. 100000" step="1000" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="sal-max">Maximum Annual Salary</label>
+          <input type="number" id="sal-max" name="salary_max" value="{{ form_data.get('salary_max', '') }}" placeholder="e.g. 150000" step="1000" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="sal-curr">Currency Symbol</label>
+          <input type="text" id="sal-curr" name="salary_currency" value="{{ form_data.get('salary_currency', '$') }}" class="form-control text-sm">
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label" for="job-skills">Required Skills (Comma-separated)</label>
+        <input type="text" id="job-skills" name="skills" value="{{ form_data.get('skills', '') }}"
+               placeholder="e.g. Python, Docker, Kubernetes, AWS" class="form-control text-sm">
+      </div>
+    </div>
+
+    <!-- Description & Specifics -->
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-file-lines text-blue-600"></i> Job Description & Specifics
+      </h2>
+
+      <div>
+        <label class="form-label" for="job-desc">Job Description <span class="text-rose-500">*</span></label>
+        <textarea id="job-desc" name="description" rows="5" required
+                  placeholder="Comprehensive description of the position..." class="form-control text-sm">{{ form_data.get('description', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="job-resp">Responsibilities</label>
+        <textarea id="job-resp" name="responsibilities" rows="4"
+                  placeholder="Key day-to-day responsibilities..." class="form-control text-sm">{{ form_data.get('responsibilities', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="job-req">Requirements</label>
+        <textarea id="job-req" name="requirements" rows="4"
+                  placeholder="Required skills and educational qualifications..." class="form-control text-sm">{{ form_data.get('requirements', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="job-status">Publishing Status</label>
+        <select id="job-status" name="status" class="form-control text-sm max-w-xs">
+          <option value="Open" {{ 'selected' if form_data.get('status') == 'Open' else '' }}>Open (Immediately Live for Candidates)</option>
+          <option value="Draft" {{ 'selected' if form_data.get('status') == 'Draft' else '' }}>Draft (Private)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3">
+      <a href="{{ url_for('admin.jobs') }}" class="btn btn-secondary btn-sm">Cancel</a>
+      <button type="submit" class="btn btn-primary btn-sm px-6">
+        <i class="fa-solid fa-paper-plane mr-1"></i> Post Job Now
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

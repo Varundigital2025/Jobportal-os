@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Applications — Admin Portal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="badge badge-danger text-xs uppercase tracking-wider">Admin Console</span>
+          <span class="text-xs text-slate-400">&bull; Application Review</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Platform Applications Review</h1>
+        <p class="text-sm text-slate-500 mt-1">Review candidate applications, examine qualifications, and update recruitment status live across the platform</p>
+      </div>
+
+      <form action="{{ url_for('admin.applications') }}" method="GET" class="flex items-center gap-2">
+        <select name="status" onchange="this.form.submit()" class="form-control text-xs py-1.5 px-3">
+          <option value="">All Statuses</option>
+          {% for st in statuses %}
+            <option value="{{ st }}" {{ 'selected' if selected_status == st else '' }}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="app-card overflow-hidden">
+    {% if applications %}
+      <div class="table-responsive">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-slate-50/70 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
+              <th class="py-3.5 px-5 font-semibold">Candidate</th>
+              <th class="py-3.5 px-5 font-semibold">Job Title & Company</th>
+              <th class="py-3.5 px-5 font-semibold">Applied On</th>
+              <th class="py-3.5 px-5 font-semibold">Resume</th>
+              <th class="py-3.5 px-5 font-semibold">Update Status</th>
+              <th class="py-3.5 px-5 font-semibold text-right">Review Details</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for app in applications %}
+              <tr class="hover:bg-slate-50/70 transition">
+                
+                <!-- Candidate Info -->
+                <td class="py-4 px-5">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                      {% if app.candidate.profile_photo %}
+                        <img src="{{ url_for('serve_profile_photo', filename=app.candidate.profile_photo) }}" alt="{{ app.candidate.name }}" class="w-full h-full object-cover">
+                      {% else %}
+                        {{ app.candidate.name[0] | upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div class="font-bold text-slate-900">{{ app.candidate.name }}</div>
+                      <span class="text-xs text-slate-400 block">{{ app.candidate.email }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Job Title & Company -->
+                <td class="py-4 px-5">
+                  <a href="{{ url_for('jobs.job_details', job_id=app.job.id) }}" class="font-semibold text-slate-900 hover:text-blue-600">
+                    {{ app.job.title }}
+                  </a>
+                  <span class="text-xs text-slate-400 block">
+                    {{ app.job.company.company_name if app.job.company else 'Employer' }} &bull; {{ app.job.location }}
+                  </span>
+                </td>
+
+                <!-- Applied Date -->
+                <td class="py-4 px-5 text-xs text-slate-500">
+                  {{ app.applied_at.strftime('%b %d, %Y') }}
+                </td>
+
+                <!-- Resume Download -->
+                <td class="py-4 px-5">
+                  {% if app.resume_path %}
+                    <a href="{{ url_for('admin.download_resume', app_id=app.id) }}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition" title="Download Resume">
+                      <i class="fa-solid fa-file-pdf"></i> Resume
+                    </a>
+                  {% else %}
+                    <span class="text-xs text-slate-400 italic">None attached</span>
+                  {% endif %}
+                </td>
+
+                <!-- Immediate Status Update Form -->
+                <td class="py-4 px-5">
+                  <form action="{{ url_for('admin.update_application_status_route', app_id=app.id) }}" method="POST" class="flex items-center gap-1.5">
+                    <select name="status" class="form-control text-xs py-1 px-2 border-slate-200">
+                      {% for st in statuses %}
+                        <option value="{{ st }}" {{ 'selected' if app.status == st else '' }}>{{ st }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-sm py-1 px-2 text-xs" title="Save Status Immediately">
+                      <i class="fa-solid fa-check text-emerald-600"></i>
+                    </button>
+                  </form>
+                  <span class="badge {{ app.status_badge_class }} text-[10px] mt-1">Current: {{ app.status }}</span>
+                </td>
+
+                <!-- Review / Inspect Modal Button -->
+                <td class="py-4 px-5 text-right whitespace-nowrap">
+                  <button type="button" data-modal-target="admin-app-{{ app.id }}" class="btn btn-secondary btn-sm py-1 px-2.5 text-xs">
+                    <i class="fa-solid fa-clipboard-user mr-1"></i> Review
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Review Modal Inspector -->
+              <div id="admin-app-{{ app.id }}" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative text-left max-h-[90vh] overflow-y-auto">
+                  <button type="button" data-modal-close class="absolute top-5 right-5 text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                  </button>
+
+                  <div class="flex items-center gap-4 pb-4 border-b border-slate-100 mb-5">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-700 font-bold text-xl flex items-center justify-center shrink-0 overflow-hidden">
+                      {% if app.candidate.profile_photo %}
+                        <img src="{{ url_for('serve_profile_photo', filename=app.candidate.profile_photo) }}" alt="{{ app.candidate.name }}" class="w-full h-full object-cover">
+                      {% else %}
+                        {{ app.candidate.name[0] | upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-slate-900">{{ app.applicant_name or app.candidate.name }}</h3>
+                        <span class="badge {{ app.status_badge_class }} text-[11px]">{{ app.status }}</span>
+                      </div>
+                      <p class="text-xs text-slate-500 mt-0.5">Application for <strong>{{ app.job.title }}</strong> at {{ app.job.company.company_name if app.job.company else 'Employer' }}</p>
+                      <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mt-1.5 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                        <span><i class="fa-solid fa-envelope mr-1 text-slate-400"></i>{{ app.applicant_email or app.candidate.email }}</span>
+                        <span><i class="fa-solid fa-phone mr-1 text-slate-400"></i>{{ app.applicant_phone or app.candidate.phone or 'Not provided' }}</span>
+                        <span><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>{{ app.applicant_location or app.candidate.location or 'Not provided' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Details Body -->
+                  <div class="space-y-4 text-xs">
+
+                    <!-- Submitted Qualifications Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                      <div>
+                        <span class="font-bold text-slate-700 block mb-0.5">Work Experience:</span>
+                        <p class="text-slate-900 font-medium">{{ app.experience or (app.candidate.candidate_profile.experience if app.candidate.candidate_profile else 'Not specified') }}</p>
+                      </div>
+                      <div>
+                        <span class="font-bold text-slate-700 block mb-0.5">Highest Qualification:</span>
+                        <p class="text-slate-900 font-medium">{{ app.qualification or (app.candidate.candidate_profile.qualification or app.candidate.candidate_profile.education if app.candidate.candidate_profile else 'Not specified') }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Skills Submitted -->
+                    {% if app.skills or (app.candidate.candidate_profile and app.candidate.candidate_profile.skills) %}
+                      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="font-bold text-slate-700 block mb-1.5">Submitted Skills:</span>
+                        <div class="flex flex-wrap gap-1">
+                          {% for skill in (app.skills or app.candidate.candidate_profile.skills).split(',') %}
+                            {% if skill.strip() %}
+                              <span class="badge badge-primary text-[11px]">{{ skill.strip() }}</span>
+                            {% endif %}
+                          {% endfor %}
+                        </div>
+                      </div>
+                    {% endif %}
+                    
+                    <!-- Cover Letter -->
+                    {% if app.cover_letter %}
+                      <div class="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100">
+                        <span class="font-bold text-blue-900 block mb-1">Cover Letter Submitted:</span>
+                        <p class="text-slate-700 leading-relaxed whitespace-pre-line">{{ app.cover_letter }}</p>
+                      </div>
+                    {% endif %}
+
+                    <!-- Status Update Inside Modal with Admin Notes -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 mt-4 space-y-3">
+                      <span class="font-bold text-slate-800 block">Review & Update Status:</span>
+                      <form action="{{ url_for('admin.update_application_status_route', app_id=app.id) }}" method="POST" class="space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <label class="text-xs font-semibold text-slate-700 min-w-[80px]">New Status:</label>
+                          <select name="status" class="form-control text-xs py-1.5 px-3 max-w-xs">
+                            {% for st in statuses %}
+                              <option value="{{ st }}" {{ 'selected' if app.status == st else '' }}>{{ st }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div>
+                          <label class="text-xs font-semibold text-slate-700 block mb-1">Recruiter / Admin Note to Candidate (Optional):</label>
+                          <textarea name="admin_notes" rows="2" placeholder="e.g. Congratulations! We would like to schedule an interview for Tuesday at 2 PM..."
+                                    class="form-control text-xs">{{ app.admin_notes or '' }}</textarea>
+                          <span class="text-[11px] text-slate-400 mt-0.5 block">This note will reflect directly on the candidate's dashboard and applications page.</span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                          <i class="fa-solid fa-paper-plane mr-1"></i> Update Status & Notify Candidate
+                        </button>
+                      </form>
+                    </div>
+
+                  </div>
+
+                  <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    {% if app.resume_path %}
+                      <a href="{{ url_for('admin.download_resume', app_id=app.id) }}" class="btn btn-secondary btn-sm">
+                        <i class="fa-solid fa-download mr-1"></i> Download Resume
+                      </a>
+                    {% else %}
+                      <span></span>
+                    {% endif %}
+                    <button type="button" data-modal-close class="btn btn-secondary btn-sm">Close</button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% include "components/pagination.html" %}
+
+    {% else %}
+      <div class="p-12 text-center">
+        <i class="fa-solid fa-file-circle-xmark text-slate-300 text-4xl mb-3"></i>
+        <h3 class="text-base font-bold text-slate-900">No applications found</h3>
+        <p class="text-xs text-slate-500 mt-1">No candidate applications matched the active status filter.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

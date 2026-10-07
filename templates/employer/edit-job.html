@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Job: {{ job.title }} — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Edit Job Opening</h1>
+        <p class="text-sm text-slate-500 mt-1">Updating "{{ job.title }}"</p>
+      </div>
+      <a href="{{ url_for('employer.manage_jobs') }}" class="btn btn-secondary btn-sm">
+        Back to Jobs
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form action="{{ url_for('employer.edit_job', job_id=job.id) }}" method="POST" class="space-y-8">
+    
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-briefcase text-blue-600"></i> Role Information
+      </h2>
+
+      <div>
+        <label class="form-label" for="edit-title">Job Title <span class="text-rose-500">*</span></label>
+        <input type="text" id="edit-title" name="title" value="{{ job.title }}" required class="form-control text-sm">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="edit-cat">Category <span class="text-rose-500">*</span></label>
+          <select id="edit-cat" name="category" required class="form-control text-sm">
+            {% for cat in categories %}
+              <option value="{{ cat }}" {{ 'selected' if job.category == cat else '' }}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="edit-loc">Location <span class="text-rose-500">*</span></label>
+          <input type="text" id="edit-loc" name="location" value="{{ job.location }}" required class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="edit-type">Job Type <span class="text-rose-500">*</span></label>
+          <select id="edit-type" name="job_type" required class="form-control text-sm">
+            {% for jt in job_types %}
+              <option value="{{ jt }}" {{ 'selected' if job.job_type == jt else '' }}>{{ jt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="edit-mode">Work Mode <span class="text-rose-500">*</span></label>
+          <select id="edit-mode" name="work_mode" required class="form-control text-sm">
+            {% for wm in work_modes %}
+              <option value="{{ wm }}" {{ 'selected' if job.work_mode == wm else '' }}>{{ wm }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="edit-exp">Experience Level</label>
+          <select id="edit-exp" name="experience_level" class="form-control text-sm">
+            {% for exp in experience_levels %}
+              <option value="{{ exp }}" {{ 'selected' if job.experience_level == exp else '' }}>{{ exp }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="edit-deadline">Application Deadline</label>
+          <input type="date" id="edit-deadline" name="deadline" value="{{ job.deadline.strftime('%Y-%m-%d') if job.deadline else '' }}" class="form-control text-sm">
+        </div>
+      </div>
+    </div>
+
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-money-bill-wave text-blue-600"></i> Compensation & Skills
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div>
+          <label class="form-label" for="edit-sal-min">Minimum Salary</label>
+          <input type="number" id="edit-sal-min" name="salary_min" value="{{ job.salary_min or '' }}" step="1000" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="edit-sal-max">Maximum Salary</label>
+          <input type="number" id="edit-sal-max" name="salary_max" value="{{ job.salary_max or '' }}" step="1000" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="edit-curr">Currency</label>
+          <input type="text" id="edit-curr" name="salary_currency" value="{{ job.salary_currency or '$' }}" class="form-control text-sm">
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label" for="edit-skills">Skills (Comma-separated)</label>
+        <input type="text" id="edit-skills" name="skills" value="{{ job.skills or '' }}" class="form-control text-sm">
+      </div>
+    </div>
+
+    <div class="app-card p-6 sm:p-8 space-y-5">
+      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-file-lines text-blue-600"></i> Details & Status
+      </h2>
+
+      <div>
+        <label class="form-label" for="edit-desc">Job Description <span class="text-rose-500">*</span></label>
+        <textarea id="edit-desc" name="description" rows="5" required class="form-control text-sm">{{ job.description }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="edit-resp">Responsibilities</label>
+        <textarea id="edit-resp" name="responsibilities" rows="4" class="form-control text-sm">{{ job.responsibilities or '' }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="edit-req">Requirements</label>
+        <textarea id="edit-req" name="requirements" rows="4" class="form-control text-sm">{{ job.requirements or '' }}</textarea>
+      </div>
+
+      <div>
+        <label class="form-label" for="edit-status">Job Status</label>
+        <select id="edit-status" name="status" class="form-control text-sm max-w-xs">
+          <option value="Open" {{ 'selected' if job.status == 'Open' else '' }}>Open (Accepting applicants)</option>
+          <option value="Closed" {{ 'selected' if job.status == 'Closed' else '' }}>Closed</option>
+          <option value="Draft" {{ 'selected' if job.status == 'Draft' else '' }}>Draft (Private)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3">
+      <a href="{{ url_for('employer.manage_jobs') }}" class="btn btn-secondary btn-sm">Cancel</a>
+      <button type="submit" class="btn btn-primary btn-sm px-6">Save Changes</button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

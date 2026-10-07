@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Company Profile — JobPortal{% endblock %}
+
+{% block content %}
+<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Company Profile</h1>
+    <p class="text-sm text-slate-500 mt-1">Manage public branding, contact info, and employer description</p>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form action="{{ url_for('employer.company_profile') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+    <div class="app-card p-6 sm:p-8 space-y-6">
+      
+      <!-- Company Logo & Preview -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-5 pb-6 border-b border-slate-100">
+        <div class="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+          {% if company.logo %}
+            <img src="{{ url_for('serve_company_logo', filename=company.logo) }}" alt="{{ company.company_name }}" class="w-full h-full object-cover">
+          {% else %}
+            <span class="font-extrabold text-2xl text-slate-700">{{ company.company_name[0] | upper }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <label class="form-label text-xs font-semibold text-slate-700">Company Logo</label>
+          <input type="file" name="logo" accept="image/*"
+                 class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+          <span class="text-[11px] text-slate-400 mt-1 block">PNG, JPG, or WEBP (Square recommended)</span>
+        </div>
+      </div>
+
+      <!-- Fields Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label" for="comp-name">Company Name <span class="text-rose-500">*</span></label>
+          <input type="text" id="comp-name" name="company_name" value="{{ company.company_name }}" required class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="comp-ind">Industry</label>
+          <input type="text" id="comp-ind" name="industry" value="{{ company.industry or '' }}" placeholder="e.g. Software & Cloud Computing" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="comp-size">Company Size</label>
+          <select id="comp-size" name="company_size" class="form-control text-sm">
+            <option value="">Select size</option>
+            {% for s in ['1-10', '11-50', '51-200', '201-500', '500+'] %}
+              <option value="{{ s }}" {{ 'selected' if company.company_size == s else '' }}>{{ s }} employees</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="comp-web">Website URL</label>
+          <input type="url" id="comp-web" name="website" value="{{ company.website or '' }}" placeholder="https://example.com" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="comp-loc">Headquarters Location</label>
+          <input type="text" id="comp-loc" name="location" value="{{ company.location or '' }}" placeholder="e.g. Seattle, WA" class="form-control text-sm">
+        </div>
+
+        <div>
+          <label class="form-label" for="comp-phone">Contact Phone</label>
+          <input type="tel" id="comp-phone" name="phone" value="{{ company.phone or '' }}" placeholder="+1 (555) 000-0000" class="form-control text-sm">
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="form-label" for="comp-desc">Company Overview / Description</label>
+        <textarea id="comp-desc" name="description" rows="5"
+                  placeholder="Describe your company culture, products, and mission for prospective job applicants..." class="form-control text-sm">{{ company.description or '' }}</textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <a href="{{ url_for('employer.dashboard') }}" class="btn btn-secondary btn-sm">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-sm px-6">Save Company Profile</button>
+      </div>
+
+    </div>
+  </form>
+</div>
+{% endblock %}
