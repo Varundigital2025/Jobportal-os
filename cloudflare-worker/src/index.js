@@ -24,7 +24,7 @@ export default {
       });
     }
 
-    const backendUrl = env.BACKEND_URL || 'https://definition-gotten-garlic-takes.trycloudflare.com';
+    const backendUrl = env.BACKEND_URL || 'https://annotation-remained-grill-arrived.trycloudflare.com';
     const targetUrl = new URL(url.pathname + url.search, backendUrl);
 
     // Prepare headers for proxying
