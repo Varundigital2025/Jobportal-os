@@ -168,9 +168,6 @@
             <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">
               <i class="fa-solid fa-user-plus mr-1"></i> Register
             </a>
-            <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm ml-1">
-              Employer Portal
-            </a>
           {% else %}
             {% if current_user.role == 'employer' %}
               <a href="{{ url_for('employer.create_job') }}" class="btn btn-primary btn-sm">

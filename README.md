@@ -230,11 +230,30 @@ The application utilizes SQLAlchemy models and standard relational constraints. 
    ```
    No modifications to Python application logic or routes are required.
 
+
 ---
 
-## 🤖 Future AI Integration Architecture
+## 🌐 Cloudflare Edge Deployment & Tunnel Troubleshooting
 
-The architecture is prepared for future AI feature services in `services/`:
-* `services/ai_matching_service.py`: Computes cosine similarity between Candidate skills/bio embeddings and Job requirements.
-* `services/ai_resume_parser.py`: Extracts structured experience and skills from uploaded PDF resumes.
-* `services/ai_job_copilot.py`: Generates job descriptions, responsibilities, and interview questions for employers.
+The project includes an integrated Cloudflare edge architecture powered by `cloudflared` and a Cloudflare Worker reverse-proxy gateway (`cloudflare-worker/`):
+
+* **Live Gateway URL**: `https://jobportal-erp.varundigitaluiux.workers.dev`
+* **Edge Health Endpoint**: `https://jobportal-erp.varundigitaluiux.workers.dev/cloudflare-status`
+
+### Quick Start Scripts
+
+* **`start_tunnel.bat`**: Double-click to launch Flask and the Cloudflare Tunnel in an interactive PowerShell window. Keep this window open while using the application.
+* **`.\run_tunnel.ps1 -Background`**: Starts both Flask and Cloudflare Tunnel silently in the background.
+* **`check_status.bat`** (or `.\run_tunnel.ps1 -Status`): Verifies if Flask and `cloudflared` are running and checks edge connectivity.
+* **`stop_tunnel.bat`** (or `.\run_tunnel.ps1 -Stop`): Stops all background instances of Flask and Cloudflare Tunnel.
+
+### ⚠️ Resolving "Error 1033: Cloudflare Tunnel error"
+
+**What causes Error 1033?**
+Cloudflare Error 1033 occurs when Cloudflare's edge network receives a request for a tunnel host, but the `cloudflared` daemon on your local computer is **offline, crashed, or terminated**.
+
+Because `run_tunnel.ps1` establishes a quick tunnel (`trycloudflare.com`):
+1. **Closing the PowerShell window** kills the `cloudflared` process, severing the link to Cloudflare.
+2. Once disconnected, that quick tunnel URL is discarded by Cloudflare, resulting in Error 1033.
+3. To recover, simply run `start_tunnel.bat` or `.\run_tunnel.ps1 -Background`. It will automatically spin up Flask, connect a new tunnel, and redeploy the Cloudflare Worker to point to the active tunnel.
+
