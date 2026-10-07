@@ -6,6 +6,7 @@ from models.job import Job
 from models.application import Application
 from models.saved_job import SavedJob
 from models.notification import Notification
+from models.system_setting import SystemSetting
 
 __all__ = [
     'db',
@@ -15,5 +16,7 @@ __all__ = [
     'Job',
     'Application',
     'SavedJob',
-    'Notification'
+    'Notification',
+    'SystemSetting'
 ]
+

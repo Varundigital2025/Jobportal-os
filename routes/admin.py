@@ -6,9 +6,13 @@ from models.candidate import CandidateProfile
 from models.company import Company
 from models.job import Job
 from models.application import Application
+from models.system_setting import SystemSetting
 from services.auth_service import get_current_user, admin_required
 from services.application_service import update_application_status
-from services.file_service import save_resume, save_profile_photo, save_company_logo
+from services.file_service import save_resume, save_profile_photo, save_company_logo, save_branding_image
+from services.settings_service import (
+    get_all_settings, get_setting, set_setting, update_settings, generate_secure_api_key
+)
 from routes.jobs import CATEGORIES, JOB_TYPES, WORK_MODES, EXPERIENCE_LEVELS
 from config import Config
 
@@ -505,3 +509,240 @@ def download_resume(app_id):
         as_attachment=True,
         download_name=download_filename
     )
+
+
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+@admin_required
+def settings():
+    current_admin = get_current_user()
+    active_tab = request.args.get('tab', 'admin_portal').strip()
+
+    if request.method == 'POST':
+        action = request.form.get('action', '').strip()
+
+        # 1. Update Admin Portal Branding & Details
+        if action == 'update_admin_branding':
+            admin_portal_name = request.form.get('admin_portal_name', '').strip()
+            admin_portal_tagline = request.form.get('admin_portal_tagline', '').strip()
+            admin_badge_text = request.form.get('admin_badge_text', '').strip()
+            admin_theme = request.form.get('admin_theme', 'slate').strip()
+
+            if not admin_portal_name:
+                flash('Admin Portal Name cannot be empty.', 'danger')
+                return redirect(url_for('admin.settings', tab='admin_portal'))
+
+            updates = {
+                'admin_portal_name': admin_portal_name,
+                'admin_portal_tagline': admin_portal_tagline,
+                'admin_badge_text': admin_badge_text or 'SuperAdmin Console',
+                'admin_theme': admin_theme if admin_theme in ['slate', 'dark', 'indigo', 'rose', 'emerald'] else 'slate'
+            }
+
+            # Check if admin logo was uploaded
+            logo_file = request.files.get('admin_portal_logo')
+            if logo_file and logo_file.filename and logo_file.filename.strip():
+                logo_fn, err = save_branding_image(logo_file, prefix='admin_logo_')
+                if err:
+                    flash(f'Admin portal logo error: {err}', 'danger')
+                    return redirect(url_for('admin.settings', tab='admin_portal'))
+                updates['admin_portal_logo'] = logo_fn
+
+            update_settings(updates)
+            flash('Admin Portal branding, logo, and console details updated successfully!', 'success')
+            return redirect(url_for('admin.settings', tab='admin_portal'))
+
+        # 2. Remove Admin Portal Logo
+        elif action == 'remove_admin_logo':
+            set_setting('admin_portal_logo', '', group='admin_portal')
+            flash('Custom Admin Portal logo removed. Default portal iconography restored.', 'info')
+            return redirect(url_for('admin.settings', tab='admin_portal'))
+
+        # 3. Update Website Details & Public Logo
+        elif action == 'update_site_branding':
+            site_name = request.form.get('site_name', '').strip()
+            site_tagline = request.form.get('site_tagline', '').strip()
+            contact_email = request.form.get('contact_email', '').strip()
+            contact_phone = request.form.get('contact_phone', '').strip()
+            company_address = request.form.get('company_address', '').strip()
+            footer_text = request.form.get('footer_text', '').strip()
+            copyright_text = request.form.get('copyright_text', '').strip()
+            social_linkedin = request.form.get('social_linkedin', '').strip()
+            social_github = request.form.get('social_github', '').strip()
+            social_twitter = request.form.get('social_twitter', '').strip()
+
+            if not site_name:
+                flash('Website Name cannot be empty.', 'danger')
+                return redirect(url_for('admin.settings', tab='website'))
+
+            updates = {
+                'site_name': site_name,
+                'site_tagline': site_tagline,
+                'contact_email': contact_email,
+                'contact_phone': contact_phone,
+                'company_address': company_address,
+                'footer_text': footer_text,
+                'copyright_text': copyright_text,
+                'social_linkedin': social_linkedin,
+                'social_github': social_github,
+                'social_twitter': social_twitter,
+            }
+
+            # Check website logo upload
+            site_logo_file = request.files.get('site_logo')
+            if site_logo_file and site_logo_file.filename and site_logo_file.filename.strip():
+                logo_fn, err = save_branding_image(site_logo_file, prefix='site_logo_')
+                if err:
+                    flash(f'Website logo error: {err}', 'danger')
+                    return redirect(url_for('admin.settings', tab='website'))
+                updates['site_logo'] = logo_fn
+
+            # Check favicon upload
+            favicon_file = request.files.get('site_favicon')
+            if favicon_file and favicon_file.filename and favicon_file.filename.strip():
+                fav_fn, err = save_branding_image(favicon_file, prefix='favicon_')
+                if not err:
+                    updates['site_favicon'] = fav_fn
+
+            update_settings(updates)
+            flash('Public website branding, logo, and contact details updated successfully!', 'success')
+            return redirect(url_for('admin.settings', tab='website'))
+
+        # 4. Remove Website Logo
+        elif action == 'remove_site_logo':
+            set_setting('site_logo', '', group='general')
+            flash('Custom website logo removed. Standard website icon is restored.', 'info')
+            return redirect(url_for('admin.settings', tab='website'))
+
+        # 5. Update Integrations & Platform Controls
+        elif action == 'update_integrations':
+            webhook_url = request.form.get('webhook_url', '').strip()
+            webhook_secret = request.form.get('webhook_secret', '').strip()
+            api_key = request.form.get('api_key', '').strip()
+            integration_mode = request.form.get('integration_mode', 'standalone').strip()
+            allow_cand = 'true' if request.form.get('allow_candidate_registration') == '1' else 'false'
+            allow_emp = 'true' if request.form.get('allow_employer_registration') == '1' else 'false'
+            maint_mode = 'true' if request.form.get('maintenance_mode') == '1' else 'false'
+            custom_css = request.form.get('custom_css', '').strip()
+            custom_header_script = request.form.get('custom_header_script', '').strip()
+
+            updates = {
+                'webhook_url': webhook_url,
+                'webhook_secret': webhook_secret,
+                'api_key': api_key,
+                'integration_mode': integration_mode,
+                'allow_candidate_registration': allow_cand,
+                'allow_employer_registration': allow_emp,
+                'maintenance_mode': maint_mode,
+                'custom_css': custom_css,
+                'custom_header_script': custom_header_script
+            }
+            update_settings(updates)
+            flash('Integration endpoints and platform controls saved successfully!', 'success')
+            return redirect(url_for('admin.settings', tab='integrations'))
+
+        # 6. Generate API Key
+        elif action == 'generate_api_key':
+            new_key = generate_secure_api_key()
+            set_setting('api_key', new_key, group='integration')
+            flash(f'New Integration API Key generated: {new_key}', 'success')
+            return redirect(url_for('admin.settings', tab='integrations'))
+
+        # 7. Change Admin Password
+        elif action == 'change_password':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+
+            if not current_password or not new_password or not confirm_password:
+                flash('All password fields are required.', 'danger')
+                return redirect(url_for('admin.settings', tab='security'))
+
+            if not current_admin.check_password(current_password):
+                flash('Current administrator password is incorrect.', 'danger')
+                return redirect(url_for('admin.settings', tab='security'))
+
+            if len(new_password) < 6:
+                flash('New administrator password must be at least 6 characters long.', 'danger')
+                return redirect(url_for('admin.settings', tab='security'))
+
+            if new_password != confirm_password:
+                flash('New password and confirmation password do not match.', 'danger')
+                return redirect(url_for('admin.settings', tab='security'))
+
+            current_admin.set_password(new_password)
+            db.session.commit()
+
+            # Record security notification
+            from services.notification_service import create_notification
+            create_notification(
+                current_admin.id,
+                "Security Alert: Admin Password Updated",
+                "Your administrator account password was changed from Admin Portal Settings.",
+                link="/admin/settings?tab=security"
+            )
+
+            flash('Administrator password updated successfully! Please keep your credentials secure.', 'success')
+            return redirect(url_for('admin.settings', tab='security'))
+
+        # 8. Update Admin Profile
+        elif action == 'update_admin_profile':
+            name = request.form.get('name', '').strip()
+            email = request.form.get('email', '').strip().lower()
+            phone = request.form.get('phone', '').strip()
+            location = request.form.get('location', '').strip()
+
+            if not name or not email:
+                flash('Administrator Name and Email are required.', 'danger')
+                return redirect(url_for('admin.settings', tab='security'))
+
+            # Check if email taken by another user
+            existing = User.query.filter(User.email == email, User.id != current_admin.id).first()
+            if existing:
+                flash(f'The email "{email}" is already used by another account.', 'danger')
+                return redirect(url_for('admin.settings', tab='security'))
+
+            current_admin.name = name
+            current_admin.email = email
+            current_admin.phone = phone if phone else None
+            current_admin.location = location if location else None
+
+            photo_file = request.files.get('profile_photo')
+            if photo_file and photo_file.filename and photo_file.filename.strip():
+                photo_fn, err = save_profile_photo(photo_file)
+                if not err:
+                    current_admin.profile_photo = photo_fn
+                else:
+                    flash(f'Profile photo warning: {err}', 'warning')
+
+            db.session.commit()
+            flash('Administrator profile information saved successfully.', 'success')
+            return redirect(url_for('admin.settings', tab='security'))
+
+        else:
+            flash('Unrecognized settings action.', 'warning')
+            return redirect(url_for('admin.settings'))
+
+    settings_data = get_all_settings()
+    return render_template(
+        'admin/settings.html',
+        settings=settings_data,
+        current_admin=current_admin,
+        active_tab=active_tab
+    )
+
+
+@admin_bp.route('/api/portal-info')
+def api_portal_info():
+    """
+    Public / Integration status endpoint providing portal details and health.
+    Can be queried by external ERPs or monitoring microservices.
+    """
+    settings_data = get_all_settings()
+    return jsonify({
+        'status': 'healthy',
+        'site_name': settings_data.get('site_name'),
+        'admin_portal_name': settings_data.get('admin_portal_name'),
+        'integration_mode': settings_data.get('integration_mode'),
+        'timestamp': datetime.utcnow().isoformat()
+    })
+

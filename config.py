@@ -23,10 +23,12 @@ class Config:
     RESUME_FOLDER = os.path.join(UPLOAD_FOLDER, 'resumes')
     PHOTO_FOLDER = os.path.join(UPLOAD_FOLDER, 'profile_photos')
     LOGO_FOLDER = os.path.join(UPLOAD_FOLDER, 'company_logos')
+    BRANDING_FOLDER = os.path.join(UPLOAD_FOLDER, 'branding')
 
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH') or (16 * 1024 * 1024))  # 16 MB max
     ALLOWED_RESUME_EXTENSIONS = {'pdf', 'doc', 'docx', 'rtf', 'txt'}
     ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'jfif', 'svg'}
+    ALLOWED_BRANDING_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'ico'}
 
     # Pagination
     JOBS_PER_PAGE = 9

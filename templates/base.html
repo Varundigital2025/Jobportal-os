@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}JobPortal — Connect With Top Careers & Talent{% endblock %}</title>
+  <title>{% block title %}{{ (site_settings.admin_portal_name + ' — ' + site_settings.admin_badge_text) if request.path.startswith('/admin') else (site_settings.site_name or 'JobPortal') + ' — ' + (site_settings.site_tagline or 'Connect With Top Careers & Talent') }}{% endblock %}</title>
+  {% if site_settings and site_settings.site_favicon %}
+  <link rel="icon" href="{{ url_for('serve_branding_logo', filename=site_settings.site_favicon) }}">
+  {% endif %}
   
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,6 +44,12 @@
   <!-- Core Design Tokens & Custom Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   {% block extra_css %}{% endblock %}
+  {% if site_settings and site_settings.custom_header_script %}
+    {{ site_settings.custom_header_script | safe }}
+  {% endif %}
+  {% if site_settings and site_settings.custom_css %}
+    <style>{{ site_settings.custom_css | safe }}</style>
+  {% endif %}
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased">
 
@@ -49,76 +58,104 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16">
         
-        <!-- Left: Logo & Core Navigation -->
-        <div class="flex items-center gap-8">
-          <a href="{{ url_for('home') }}" class="flex items-center gap-2.5 font-bold text-xl text-slate-900 tracking-tight">
-            <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
-              <i class="fa-solid fa-briefcase text-lg"></i>
-            </div>
-            <span>Job<span class="text-blue-600">Portal</span></span>
-          </a>
+        <!-- Left: Logo & Core Brand -->
+        <div class="flex items-center gap-6 lg:gap-8">
+          {% if current_user and current_user.role == 'admin' and request.path.startswith('/admin') %}
+            <!-- Distinct Minimalist Admin Brand -->
+            <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2.5 text-slate-900 tracking-tight group" title="{{ site_settings.admin_portal_name }}">
+              {% if site_settings and site_settings.admin_portal_logo %}
+                <img src="{{ url_for('serve_branding_logo', filename=site_settings.admin_portal_logo) }}" 
+                     alt="{{ site_settings.admin_portal_name }}" class="h-8 max-w-[150px] object-contain">
+              {% else %}
+                <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm shadow-xs group-hover:bg-slate-800 transition">
+                  <i class="fa-solid fa-shield-halved text-rose-400"></i>
+                </div>
+                <div class="flex flex-col">
+                  <span class="font-bold text-sm sm:text-base text-slate-900 leading-tight">{{ site_settings.admin_portal_name or 'JobPortal Admin' }}</span>
+                  <span class="text-[9px] text-rose-600 font-bold tracking-wider uppercase leading-none">{{ site_settings.admin_badge_text or 'Console' }}</span>
+                </div>
+              {% endif %}
+            </a>
+          {% else %}
+            <!-- Public Website Logo & Branding -->
+            <a href="{{ url_for('home') }}" class="flex items-center gap-2.5 font-bold text-lg sm:text-xl text-slate-900 tracking-tight" title="{{ site_settings.site_name }}">
+              {% if site_settings and site_settings.site_logo %}
+                <img src="{{ url_for('serve_branding_logo', filename=site_settings.site_logo) }}" 
+                     alt="{{ site_settings.site_name }}" class="h-8 max-w-[150px] object-contain">
+              {% else %}
+                <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs text-sm">
+                  <i class="fa-solid fa-briefcase"></i>
+                </div>
+                <span>{{ (site_settings.site_name or 'JobPortal')[:3] }}<span class="text-blue-600">{{ (site_settings.site_name or 'JobPortal')[3:] }}</span></span>
+              {% endif %}
+            </a>
+          {% endif %}
 
-          <!-- Role-Aware Desktop Navigation Links -->
+          <!-- Role-Aware Desktop Navigation Modules with Clear Active Indicators -->
           <nav class="hidden md:flex items-center space-x-1">
             {% if not current_user %}
               <!-- Public Navigation -->
-              <a href="{{ url_for('home') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">Home</a>
-              <a href="{{ url_for('jobs.list_jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">Find Jobs</a>
-              <a href="{{ url_for('jobs.list_companies') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">Companies</a>
-              <a href="{{ url_for('about') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">About</a>
+              <a href="{{ url_for('home') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'home' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Home</a>
+              <a href="{{ url_for('jobs.list_jobs') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'jobs.list_jobs' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Find Jobs</a>
+              <a href="{{ url_for('jobs.list_companies') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'jobs.list_companies' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Companies</a>
+              <a href="{{ url_for('about') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'about' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">About</a>
 
             {% elif current_user.role == 'candidate' %}
               <!-- Candidate Navigation -->
-              <a href="{{ url_for('candidate.dashboard') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-gauge text-slate-400 mr-1.5"></i>Dashboard
+              <a href="{{ url_for('candidate.dashboard') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'candidate.dashboard' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-gauge text-slate-400"></i> Dashboard
               </a>
-              <a href="{{ url_for('jobs.list_jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-magnifying-glass text-slate-400 mr-1.5"></i>Find Jobs
+              <a href="{{ url_for('jobs.list_jobs') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'jobs.list_jobs' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-magnifying-glass text-slate-400"></i> Find Jobs
               </a>
-              <a href="{{ url_for('candidate.applications') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-paper-plane text-slate-400 mr-1.5"></i>Applications
+              <a href="{{ url_for('candidate.applications') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'candidate.applications' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-paper-plane text-slate-400"></i> Applications
               </a>
-              <a href="{{ url_for('candidate.saved_jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-bookmark text-slate-400"></i>Saved
+              <a href="{{ url_for('candidate.saved_jobs') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'candidate.saved_jobs' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-bookmark text-slate-400"></i> Saved
                 {% if user_saved_jobs_count > 0 %}
-                  <span id="saved-jobs-counter" class="bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full font-semibold">{{ user_saved_jobs_count }}</span>
+                  <span class="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.2 rounded-full font-bold">{{ user_saved_jobs_count }}</span>
                 {% endif %}
               </a>
-              <a href="{{ url_for('candidate.settings') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-gear text-slate-400 mr-1.5"></i>Settings
+              <a href="{{ url_for('candidate.settings') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'candidate.settings' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-gear text-slate-400"></i> Settings
               </a>
 
             {% elif current_user.role == 'employer' %}
               <!-- Employer Navigation -->
-              <a href="{{ url_for('employer.dashboard') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-gauge text-slate-400 mr-1.5"></i>Dashboard
+              <a href="{{ url_for('employer.dashboard') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'employer.dashboard' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-gauge text-slate-400"></i> Dashboard
               </a>
-              <a href="{{ url_for('employer.manage_jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-briefcase text-slate-400 mr-1.5"></i>My Jobs
+              <a href="{{ url_for('employer.manage_jobs') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint in ['employer.manage_jobs', 'employer.create_job', 'employer.edit_job'] else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-briefcase text-slate-400"></i> My Jobs
               </a>
-              <a href="{{ url_for('employer.applicants') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-users text-slate-400 mr-1.5"></i>Applicants
+              <a href="{{ url_for('employer.applicants') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'employer.applicants' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-users text-slate-400"></i> Applicants
               </a>
-              <a href="{{ url_for('employer.company_profile') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-building text-slate-400 mr-1.5"></i>Company
+              <a href="{{ url_for('employer.company_profile') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ 'bg-slate-100 text-blue-600 font-semibold' if request.endpoint == 'employer.company_profile' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-building text-slate-400"></i> Company
               </a>
 
             {% elif current_user.role == 'admin' %}
-              <!-- Admin Navigation -->
-              <a href="{{ url_for('admin.dashboard') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-chart-line text-slate-400 mr-1.5"></i>Dashboard
+              <!-- Minimalist Admin Module Tabs with Clear Active Indicators -->
+              {% set admin_mod = 'dashboard' if request.endpoint == 'admin.dashboard' else ('users' if request.endpoint in ['admin.users', 'admin.create_user'] else ('employers' if request.endpoint == 'admin.employers' else ('jobs' if request.endpoint in ['admin.jobs', 'admin.create_job'] else ('applications' if request.endpoint == 'admin.applications' else ('settings' if request.endpoint == 'admin.settings' else ''))))) %}
+              <a href="{{ url_for('admin.dashboard') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {{ 'bg-slate-900 text-white shadow-xs' if admin_mod == 'dashboard' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                <i class="fa-solid fa-chart-pie {{ 'text-blue-400' if admin_mod == 'dashboard' else 'text-slate-400' }}"></i> Dashboard
               </a>
-              <a href="{{ url_for('admin.users') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-user-gear text-slate-400 mr-1.5"></i>Users
+              <a href="{{ url_for('admin.users') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {{ 'bg-slate-900 text-white shadow-xs' if admin_mod == 'users' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                <i class="fa-solid fa-users {{ 'text-blue-400' if admin_mod == 'users' else 'text-slate-400' }}"></i> Users
               </a>
-              <a href="{{ url_for('admin.employers') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-building text-slate-400 mr-1.5"></i>Employers
+              <a href="{{ url_for('admin.employers') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {{ 'bg-slate-900 text-white shadow-xs' if admin_mod == 'employers' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                <i class="fa-solid fa-building {{ 'text-blue-400' if admin_mod == 'employers' else 'text-slate-400' }}"></i> Employers
               </a>
-              <a href="{{ url_for('admin.jobs') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-briefcase text-slate-400 mr-1.5"></i>Jobs
+              <a href="{{ url_for('admin.jobs') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {{ 'bg-slate-900 text-white shadow-xs' if admin_mod == 'jobs' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                <i class="fa-solid fa-briefcase {{ 'text-blue-400' if admin_mod == 'jobs' else 'text-slate-400' }}"></i> Jobs
               </a>
-              <a href="{{ url_for('admin.applications') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 transition">
-                <i class="fa-solid fa-file-lines text-slate-400 mr-1.5"></i>Applications
+              <a href="{{ url_for('admin.applications') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {{ 'bg-slate-900 text-white shadow-xs' if admin_mod == 'applications' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                <i class="fa-solid fa-file-lines {{ 'text-blue-400' if admin_mod == 'applications' else 'text-slate-400' }}"></i> Applications
+              </a>
+              <a href="{{ url_for('admin.settings') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {{ 'bg-slate-900 text-white shadow-xs' if admin_mod == 'settings' else 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                <i class="fa-solid fa-sliders {{ 'text-rose-400' if admin_mod == 'settings' else 'text-slate-400' }}"></i> Settings
               </a>
             {% endif %}
           </nav>
@@ -187,9 +224,13 @@
                   {% endif %}
                 </a>
               {% else %}
-                <div class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm">
-                  <i class="fa-solid fa-shield-halved"></i>
-                </div>
+                <a href="{{ url_for('admin.settings', tab='security') }}" title="Admin Settings & Profile" class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm hover:ring-2 hover:ring-rose-400 transition overflow-hidden">
+                  {% if current_user.profile_photo %}
+                    <img src="{{ url_for('serve_profile_photo', filename=current_user.profile_photo) }}" alt="{{ current_user.name }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <i class="fa-solid fa-shield-halved"></i>
+                  {% endif %}
+                </a>
               {% endif %}
 
               <a href="{{ url_for('auth.logout') }}" title="Log Out" class="text-slate-400 hover:text-rose-600 p-2 rounded-lg transition">
@@ -271,6 +312,9 @@
         <a href="{{ url_for('admin.employers') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Employers</a>
         <a href="{{ url_for('admin.jobs') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Jobs</a>
         <a href="{{ url_for('admin.applications') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">Applications</a>
+        <a href="{{ url_for('admin.settings') }}" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">
+          <i class="fa-solid fa-sliders text-slate-400 mr-2"></i>Portal Settings
+        </a>
         <a href="{{ url_for('notifications.list_notifications') }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-100">
           <span><i class="fa-solid fa-bell text-slate-400 mr-2"></i>Notifications</span>
           {% if unread_notifications_count and unread_notifications_count > 0 %}
@@ -324,18 +368,45 @@
         <!-- Col 1: Brand & Bio -->
         <div class="space-y-4">
           <div class="flex items-center gap-2 font-bold text-xl text-slate-900">
-            <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm">
-              <i class="fa-solid fa-briefcase"></i>
-            </div>
-            <span>Job<span class="text-blue-600">Portal</span></span>
+            {% if site_settings and site_settings.site_logo %}
+              <img src="{{ url_for('serve_branding_logo', filename=site_settings.site_logo) }}" 
+                   alt="{{ site_settings.site_name }}" class="h-8 max-w-[150px] object-contain">
+            {% else %}
+              <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm">
+                <i class="fa-solid fa-briefcase"></i>
+              </div>
+              <span>{{ (site_settings.site_name or 'JobPortal')[:3] }}<span class="text-blue-600">{{ (site_settings.site_name or 'JobPortal')[3:] }}</span></span>
+            {% endif %}
           </div>
           <p class="text-sm text-slate-500 leading-relaxed">
-            Connecting talented job seekers with industry-leading employers. Explore career opportunities, apply seamlessly, and build your future.
+            {{ site_settings.footer_text or 'Connecting talented job seekers with industry-leading employers. Explore career opportunities, apply seamlessly, and build your future.' }}
           </p>
+          {% if site_settings and (site_settings.contact_email or site_settings.contact_phone) %}
+          <div class="text-xs text-slate-500 space-y-1 pt-0.5">
+            {% if site_settings.contact_email %}
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-envelope text-slate-400 text-[11px]"></i>
+              <a href="mailto:{{ site_settings.contact_email }}" class="hover:text-blue-600">{{ site_settings.contact_email }}</a>
+            </div>
+            {% endif %}
+            {% if site_settings.contact_phone %}
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-phone text-slate-400 text-[11px]"></i>
+              <span>{{ site_settings.contact_phone }}</span>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
           <div class="flex items-center space-x-3 text-slate-400">
-            <span class="hover:text-blue-600 cursor-pointer"><i class="fa-brands fa-github text-lg"></i></span>
-            <span class="hover:text-blue-600 cursor-pointer"><i class="fa-brands fa-linkedin text-lg"></i></span>
-            <span class="hover:text-blue-600 cursor-pointer"><i class="fa-brands fa-twitter text-lg"></i></span>
+            {% if site_settings and site_settings.social_github %}
+              <a href="{{ site_settings.social_github }}" target="_blank" class="hover:text-blue-600" title="GitHub"><i class="fa-brands fa-github text-lg"></i></a>
+            {% endif %}
+            {% if site_settings and site_settings.social_linkedin %}
+              <a href="{{ site_settings.social_linkedin }}" target="_blank" class="hover:text-blue-600" title="LinkedIn"><i class="fa-brands fa-linkedin text-lg"></i></a>
+            {% endif %}
+            {% if site_settings and site_settings.social_twitter %}
+              <a href="{{ site_settings.social_twitter }}" target="_blank" class="hover:text-blue-600" title="Twitter"><i class="fa-brands fa-twitter text-lg"></i></a>
+            {% endif %}
           </div>
         </div>
 
@@ -372,10 +443,13 @@
         <div>
           <h4 class="text-sm font-semibold text-slate-900 tracking-wider uppercase mb-4">Platform</h4>
           <ul class="space-y-2.5 text-sm text-slate-600">
-            <li><a href="{{ url_for('about') }}" class="hover:text-blue-600 transition">About JobPortal</a></li>
+            <li><a href="{{ url_for('about') }}" class="hover:text-blue-600 transition">About {{ site_settings.site_name or 'JobPortal' }}</a></li>
+            {% if current_user and current_user.role == 'admin' %}
+              <li><a href="{{ url_for('admin.settings') }}" class="hover:text-blue-600 transition font-medium text-rose-600">Portal Settings</a></li>
+            {% endif %}
             <li><span class="text-slate-400">Privacy & Terms</span></li>
             <li><span class="text-slate-400">Security Guidelines</span></li>
-            <li><span class="text-slate-400">API Documentation (Coming Soon)</span></li>
+            <li><a href="{{ url_for('admin.api_portal_info') }}" target="_blank" class="text-slate-500 hover:text-blue-600">ERP Status API</a></li>
           </ul>
         </div>
 
@@ -383,7 +457,7 @@
 
       <div class="pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-4">
         <div>
-          &copy; 2026 JobPortal Application. Running locally on Windows with Python & Flask.
+          {{ site_settings.copyright_text or '© 2026 JobPortal Application. Running locally on Windows with Python & Flask.' }}
         </div>
         <div class="flex items-center space-x-6">
           <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> System Operational</span>

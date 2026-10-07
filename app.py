@@ -9,8 +9,10 @@ from models.company import Company
 from models.job import Job
 from models.application import Application
 from models.saved_job import SavedJob
+from models.system_setting import SystemSetting
 from services.auth_service import get_current_user, login_required
 from services.job_service import get_popular_categories, get_featured_jobs, get_top_companies
+from services.settings_service import get_all_settings, init_default_settings
 
 # Import Blueprints
 from routes.auth import auth_bp
@@ -32,6 +34,7 @@ def create_app(config_class=Config):
     os.makedirs(app.config['RESUME_FOLDER'], exist_ok=True)
     os.makedirs(app.config['PHOTO_FOLDER'], exist_ok=True)
     os.makedirs(app.config['LOGO_FOLDER'], exist_ok=True)
+    os.makedirs(app.config.get('BRANDING_FOLDER', os.path.join(app.config['UPLOAD_FOLDER'], 'branding')), exist_ok=True)
 
     # Register Blueprints
     app.register_blueprint(auth_bp)
@@ -55,7 +58,8 @@ def create_app(config_class=Config):
         return dict(
             current_user=user,
             user_saved_jobs_count=saved_count,
-            unread_notifications_count=unread_notifs
+            unread_notifications_count=unread_notifs,
+            site_settings=get_all_settings()
         )
 
     # Public Homepage
@@ -88,6 +92,10 @@ def create_app(config_class=Config):
     @app.route('/uploads/company_logos/<path:filename>')
     def serve_company_logo(filename):
         return send_from_directory(app.config['LOGO_FOLDER'], filename)
+
+    @app.route('/uploads/branding/<path:filename>')
+    def serve_branding_logo(filename):
+        return send_from_directory(app.config.get('BRANDING_FOLDER', os.path.join(app.config['UPLOAD_FOLDER'], 'branding')), filename)
 
     @app.route('/uploads/resumes/<path:filename>')
     @login_required
@@ -129,6 +137,11 @@ def create_app(config_class=Config):
     # Create tables automatically on startup if they don't exist
     with app.app_context():
         db.create_all()
+        # Ensure default system settings exist
+        try:
+            init_default_settings()
+        except Exception:
+            pass
         # Safe column upgrade for existing SQLite databases
         try:
             from sqlalchemy import inspect, text

@@ -74,3 +74,15 @@ def save_company_logo(file_storage):
         Config.ALLOWED_IMAGE_EXTENSIONS,
         prefix='logo_'
     )
+
+
+def save_branding_image(file_storage, prefix='brand_'):
+    """Saves admin portal logo or main website branding image."""
+    from config import Config
+    return save_upload_file(
+        file_storage,
+        Config.BRANDING_FOLDER,
+        Config.ALLOWED_BRANDING_EXTENSIONS,
+        prefix=prefix
+    )
+

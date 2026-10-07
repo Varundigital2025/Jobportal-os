@@ -881,6 +881,182 @@ class JobPortalComprehensiveTests(unittest.TestCase):
 
         self.client.get('/auth/logout')
 
+    def test_12_admin_portal_customization_and_password_settings(self):
+        """
+        Comprehensive test for:
+        1. Access control to /admin/settings (Anonymous & Candidate blocked)
+        2. Admin Dashboard Logo & Portal details customization
+        3. Visual differentiation between Admin Portal and Public Website
+        4. Public Website Branding & Details customization
+        5. Future ERP Webhook, API Key generation & Portal Info REST API
+        6. Admin Password Change from Settings (Verification, Validation, Login with new password)
+        """
+        # 1. Anonymous access is redirected to login
+        res = self.client.get('/admin/settings')
+        self.assertEqual(res.status_code, 302)
+        self.assertIn('/auth/login', res.headers.get('Location', ''))
+
+        # 2. Candidate access is forbidden (403)
+        cand_email = f"cand_settings_{uuid.uuid4().hex[:6]}@example.com"
+        self.client.post('/auth/register', data={
+            'name': 'Candidate User',
+            'email': cand_email,
+            'password': 'Password@123',
+            'confirm_password': 'Password@123',
+            'role': 'candidate'
+        }, follow_redirects=True)
+        res_cand = self.client.get('/admin/settings', follow_redirects=True)
+        self.assertEqual(res_cand.status_code, 200)
+        self.assertIn(b'Administrator privileges required', res_cand.data)
+        self.client.get('/auth/logout')
+
+        # 3. Admin logs in
+        login_res = self.client.post('/auth/login', data={
+            'email': 'admin@jobportal.local',
+            'password': 'AdminPassword@2026'
+        }, follow_redirects=True)
+        self.assertEqual(login_res.status_code, 200)
+
+        # Admin accesses Settings page
+        settings_page = self.client.get('/admin/settings')
+        self.assertEqual(settings_page.status_code, 200)
+        self.assertIn(b'Portal Settings', settings_page.data)
+        self.assertIn(b'Admin Portal & Logo', settings_page.data)
+        self.assertIn(b'Public Website & Details', settings_page.data)
+        self.assertIn(b'Integrations & ERP Sync', settings_page.data)
+        self.assertIn(b'Password & Security', settings_page.data)
+
+        # 4. Admin updates Admin Portal Branding & uploads Admin Logo
+        fake_logo_data = (io.BytesIO(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDRcustom_admin_logo'), 'admin_logo.png')
+        update_admin_res = self.client.post('/admin/settings', data={
+            'action': 'update_admin_branding',
+            'admin_portal_name': 'Enterprise ERP Operations Suite',
+            'admin_portal_tagline': 'Executive Control Suite for Enterprise Recruitment',
+            'admin_badge_text': 'Master Admin ERP',
+            'admin_theme': 'dark',
+            'admin_portal_logo': fake_logo_data
+        }, content_type='multipart/form-data', follow_redirects=True)
+        self.assertEqual(update_admin_res.status_code, 200)
+        self.assertIn(b'Admin Portal branding, logo, and console details updated successfully', update_admin_res.data)
+
+        from services.settings_service import get_setting
+        with self.app.app_context():
+            self.assertEqual(get_setting('admin_portal_name'), 'Enterprise ERP Operations Suite')
+            self.assertEqual(get_setting('admin_badge_text'), 'Master Admin ERP')
+            self.assertTrue(get_setting('admin_portal_logo').startswith('admin_logo_'))
+
+        # Verify Admin Dashboard displays updated admin branding and custom logo
+        admin_dash_res = self.client.get('/admin/dashboard')
+        self.assertEqual(admin_dash_res.status_code, 200)
+        self.assertIn(b'Enterprise ERP Operations Suite', admin_dash_res.data)
+        self.assertIn(b'Master Admin ERP', admin_dash_res.data)
+
+        # 5. Admin updates Public Website Details & Logo
+        fake_site_logo = (io.BytesIO(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDRcustom_site_logo'), 'site_logo.png')
+        update_site_res = self.client.post('/admin/settings', data={
+            'action': 'update_site_branding',
+            'site_name': 'GlobalCareers Portal',
+            'site_tagline': 'World-Class Career Opportunities',
+            'contact_email': 'contact@globalcareers.local',
+            'contact_phone': '+1 (800) 555-0199',
+            'company_address': 'New York, NY',
+            'footer_text': 'Empowering professionals globally.',
+            'copyright_text': '2026 GlobalCareers Portal ERP. All rights reserved.',
+            'site_logo': fake_site_logo
+        }, content_type='multipart/form-data', follow_redirects=True)
+        self.assertEqual(update_site_res.status_code, 200)
+        self.assertIn(b'Public website branding, logo, and contact details updated successfully', update_site_res.data)
+
+        # Verify public homepage displays updated website branding
+        home_res = self.client.get('/')
+        self.assertEqual(home_res.status_code, 200)
+        self.assertIn(b'GlobalCareers Portal', home_res.data)
+        self.assertIn(b'contact@globalcareers.local', home_res.data)
+
+        # 6. Admin updates Integrations & generates API key
+        integration_res = self.client.post('/admin/settings', data={
+            'action': 'update_integrations',
+            'webhook_url': 'https://erp.example.com/api/v1/jobs/webhook',
+            'webhook_secret': 'whsec_enterprise_secret_8921',
+            'api_key': 'jp_live_custom_key_123',
+            'integration_mode': 'erp_sync',
+            'allow_candidate_registration': '1',
+            'allow_employer_registration': '1'
+        }, follow_redirects=True)
+        self.assertEqual(integration_res.status_code, 200)
+        self.assertIn(b'Integration endpoints and platform controls saved successfully', integration_res.data)
+
+        # Generate new API key
+        gen_key_res = self.client.post('/admin/settings', data={
+            'action': 'generate_api_key'
+        }, follow_redirects=True)
+        self.assertEqual(gen_key_res.status_code, 200)
+        self.assertIn(b'New Integration API Key generated', gen_key_res.data)
+
+        # Test Portal Info API Endpoint
+        api_info_res = self.client.get('/admin/api/portal-info')
+        self.assertEqual(api_info_res.status_code, 200)
+        json_data = api_info_res.get_json()
+        self.assertEqual(json_data['status'], 'healthy')
+        self.assertEqual(json_data['admin_portal_name'], 'Enterprise ERP Operations Suite')
+        self.assertEqual(json_data['site_name'], 'GlobalCareers Portal')
+
+        # 7. Admin Password Change from Settings
+        # A. Failure case 1: Incorrect current password
+        bad_pwd_res = self.client.post('/admin/settings', data={
+            'action': 'change_password',
+            'current_password': 'IncorrectPassword!',
+            'new_password': 'SuperNewPassword@2026',
+            'confirm_password': 'SuperNewPassword@2026'
+        }, follow_redirects=True)
+        self.assertEqual(bad_pwd_res.status_code, 200)
+        self.assertIn(b'Current administrator password is incorrect', bad_pwd_res.data)
+
+        # B. Failure case 2: Mismatched new passwords
+        mismatch_pwd_res = self.client.post('/admin/settings', data={
+            'action': 'change_password',
+            'current_password': 'AdminPassword@2026',
+            'new_password': 'SuperNewPassword@2026',
+            'confirm_password': 'DifferentPassword@2026'
+        }, follow_redirects=True)
+        self.assertEqual(mismatch_pwd_res.status_code, 200)
+        self.assertIn(b'New password and confirmation password do not match', mismatch_pwd_res.data)
+
+        # C. Success case: Valid password update
+        try:
+            good_pwd_res = self.client.post('/admin/settings', data={
+                'action': 'change_password',
+                'current_password': 'AdminPassword@2026',
+                'new_password': 'SuperNewPassword@2026',
+                'confirm_password': 'SuperNewPassword@2026'
+            }, follow_redirects=True)
+            self.assertEqual(good_pwd_res.status_code, 200)
+            self.assertIn(b'Administrator password updated successfully', good_pwd_res.data)
+
+            # Logout and verify login with old password fails
+            self.client.get('/auth/logout')
+            old_login = self.client.post('/auth/login', data={
+                'email': 'admin@jobportal.local',
+                'password': 'AdminPassword@2026'
+            }, follow_redirects=True)
+            self.assertIn(b'Invalid email or password', old_login.data)
+
+            # Verify login with new password succeeds!
+            new_login = self.client.post('/auth/login', data={
+                'email': 'admin@jobportal.local',
+                'password': 'SuperNewPassword@2026'
+            }, follow_redirects=True)
+            self.assertEqual(new_login.status_code, 200)
+            self.assertIn(b'Enterprise ERP Operations Suite', new_login.data)
+        finally:
+            with self.app.app_context():
+                admin_user = User.query.filter_by(email='admin@jobportal.local').first()
+                if admin_user:
+                    admin_user.set_password('AdminPassword@2026')
+                    db.session.commit()
+            self.client.get('/auth/logout')
+
 
 if __name__ == '__main__':
     unittest.main()
+

@@ -3,16 +3,19 @@
 {% block title %}Manage Applications — Admin Portal{% endblock %}
 
 {% block content %}
-<div class="bg-slate-100/60 py-8 border-b border-slate-200">
+<div class="bg-white border-b border-slate-200/80 py-6">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2">
-          <span class="badge badge-danger text-xs uppercase tracking-wider">Admin Console</span>
-          <span class="text-xs text-slate-400">&bull; Application Review</span>
+        <div class="flex items-center gap-2 mb-1 text-xs text-slate-500">
+          <a href="{{ url_for('admin.dashboard') }}" class="hover:text-slate-800 flex items-center gap-1 font-medium">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i> Dashboard
+          </a>
+          <span class="text-slate-300">/</span>
+          <span class="text-slate-900 font-semibold">Applications</span>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Platform Applications Review</h1>
-        <p class="text-sm text-slate-500 mt-1">Review candidate applications, examine qualifications, and update recruitment status live across the platform</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Platform Applications Review</h1>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Review candidate applications, examine qualifications, and update recruitment status live across the platform</p>
       </div>
 
       <form action="{{ url_for('admin.applications') }}" method="GET" class="flex items-center gap-2">
