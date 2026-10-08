@@ -18,7 +18,7 @@ class Job(db.Model):
     experience_level = db.Column(db.String(50), nullable=True)  # Entry Level, Mid Level, Senior Level, Lead
     salary_min = db.Column(db.Integer, nullable=True)
     salary_max = db.Column(db.Integer, nullable=True)
-    salary_currency = db.Column(db.String(10), default='$', nullable=False)
+    salary_currency = db.Column(db.String(10), default='₹', nullable=False)
     skills = db.Column(db.Text, nullable=True)
     category = db.Column(db.String(100), nullable=False, index=True)
     deadline = db.Column(db.Date, nullable=True)
@@ -38,7 +38,7 @@ class Job(db.Model):
 
     @property
     def formatted_salary(self):
-        cur = self.salary_currency or '$'
+        cur = self.salary_currency or '₹'
         if self.salary_min and self.salary_max:
             return f"{cur}{self.salary_min:,} - {cur}{self.salary_max:,}"
         elif self.salary_min:

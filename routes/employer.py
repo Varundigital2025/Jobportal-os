@@ -142,7 +142,11 @@ def create_job():
         job_type = request.form.get('job_type', 'Full Time').strip()
         work_mode = request.form.get('work_mode', 'On-site').strip()
         experience_level = request.form.get('experience_level', 'Mid Level').strip()
-        salary_currency = request.form.get('salary_currency', '$').strip()
+        salary_currency = request.form.get('salary_currency', '').strip()
+        if not salary_currency:
+            from services.currency_service import detect_currency_from_location
+            detected = detect_currency_from_location(location)
+            salary_currency = detected['symbol'] if detected else '₹'
         status = request.form.get('status', 'Open').strip()
 
         # Parse salary
@@ -237,7 +241,12 @@ def edit_job(job_id):
         job.job_type = request.form.get('job_type', job.job_type).strip()
         job.work_mode = request.form.get('work_mode', job.work_mode).strip()
         job.experience_level = request.form.get('experience_level', job.experience_level).strip()
-        job.salary_currency = request.form.get('salary_currency', '$').strip()
+        new_curr = request.form.get('salary_currency', '').strip()
+        if not new_curr:
+            from services.currency_service import detect_currency_from_location
+            detected = detect_currency_from_location(job.location)
+            new_curr = detected['symbol'] if detected else (job.salary_currency or '₹')
+        job.salary_currency = new_curr
         job.status = request.form.get('status', job.status).strip()
 
         # Parse salary

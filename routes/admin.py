@@ -330,7 +330,11 @@ def create_job():
         job_type = request.form.get('job_type', 'Full Time').strip()
         work_mode = request.form.get('work_mode', 'On-site').strip()
         experience_level = request.form.get('experience_level', 'Mid Level').strip()
-        salary_currency = request.form.get('salary_currency', '$').strip()
+        salary_currency = request.form.get('salary_currency', '').strip()
+        if not salary_currency:
+            from services.currency_service import detect_currency_from_location
+            detected = detect_currency_from_location(location)
+            salary_currency = detected['symbol'] if detected else '₹'
         status = request.form.get('status', 'Open').strip()
 
         # Parse salary

@@ -116,25 +116,103 @@
 
     <!-- Compensation & Skills -->
     <div class="app-card p-6 sm:p-8 space-y-5">
-      <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-        <i class="fa-solid fa-money-bill-wave text-blue-600"></i> Compensation & Skills
-      </h2>
+      <div class="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-money-bill-wave text-blue-600"></i> Compensation & Skills
+        </h2>
+        <span class="text-xs text-slate-500 font-medium flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+          <i class="fa-solid fa-earth-americas text-blue-500"></i>
+          <span>Currency updates automatically by country</span>
+        </span>
+      </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <!-- Country & Currency Selection Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+        <!-- 1. Country Selector -->
+        <div>
+          <label class="form-label text-xs font-bold text-slate-800" for="country-selector">
+            Job Country / Region
+          </label>
+          <select id="country-selector" class="form-control text-sm bg-white cursor-pointer">
+            <option value="">-- Select Country --</option>
+            {% for item in global_countries_currencies %}
+              <option value="{{ item.code }}" 
+                      data-symbol="{{ item.symbol }}" 
+                      data-curr-code="{{ item.currency_code }}" 
+                      data-curr-name="{{ item.currency_name }}"
+                      data-country="{{ item.country }}"
+                      data-keywords="{{ item.keywords|join(',') }}"
+                      {{ 'selected' if (item.country == 'India' and not form_data.get('salary_currency')) or (item.symbol == form_data.get('salary_currency')) else '' }}>
+                {{ item.flag }} {{ item.country }} ({{ item.currency_code }} - {{ item.symbol }})
+              </option>
+            {% endfor %}
+            <option value="CUSTOM" data-symbol="" data-curr-code="CUSTOM">🌐 Other / Custom Currency</option>
+          </select>
+          <span class="text-[11px] text-slate-400 mt-1 block">Auto-selects currency symbol</span>
+        </div>
+
+        <!-- 2. Currency Code / Type -->
+        <div>
+          <label class="form-label text-xs font-bold text-slate-800" for="currency-code-display">
+            Currency
+          </label>
+          <input type="text" id="currency-code-display" readonly 
+                 value="INR — Indian Rupee" 
+                 class="form-control text-sm bg-slate-100/80 text-slate-700 cursor-not-allowed">
+          <span class="text-[11px] text-slate-400 mt-1 block">ISO standard code</span>
+        </div>
+
+        <!-- 3. Active Currency Symbol Input -->
+        <div>
+          <label class="form-label text-xs font-bold text-slate-800" for="sal-curr">
+            Currency Symbol <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="sal-curr" name="salary_currency" 
+                 value="{{ form_data.get('salary_currency', '₹') }}" required
+                 placeholder="e.g. ₹, $, £, €" 
+                 class="form-control text-sm font-bold text-blue-600 bg-white">
+          <span class="text-[11px] text-slate-400 mt-1 block">Editable symbol applied to job</span>
+        </div>
+
+        <!-- 4. Location Auto-Sync Indicator -->
+        <div class="flex flex-col justify-center">
+          <span class="text-xs font-bold text-slate-700 block mb-1">Smart Auto-Detection</span>
+          <div id="country-auto-badge" class="text-xs text-slate-600 bg-white border border-slate-200 rounded-lg p-2 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="country-detected-text">Auto-matches Location</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salary Inputs with Dynamic Currency Prefix -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <label class="form-label" for="sal-min">Minimum Annual Salary</label>
-          <input type="number" id="sal-min" name="salary_min" value="{{ form_data.get('salary_min', '') }}" placeholder="e.g. 100000" step="1000" class="form-control text-sm">
+          <div class="relative flex items-center">
+            <span class="currency-prefix-badge absolute left-3 text-sm font-bold text-slate-500 pointer-events-none">₹</span>
+            <input type="number" id="sal-min" name="salary_min" value="{{ form_data.get('salary_min', '') }}" placeholder="e.g. 600000" step="1000" class="form-control pl-8 text-sm">
+          </div>
         </div>
 
         <div>
           <label class="form-label" for="sal-max">Maximum Annual Salary</label>
-          <input type="number" id="sal-max" name="salary_max" value="{{ form_data.get('salary_max', '') }}" placeholder="e.g. 150000" step="1000" class="form-control text-sm">
+          <div class="relative flex items-center">
+            <span class="currency-prefix-badge absolute left-3 text-sm font-bold text-slate-500 pointer-events-none">₹</span>
+            <input type="number" id="sal-max" name="salary_max" value="{{ form_data.get('salary_max', '') }}" placeholder="e.g. 1200000" step="1000" class="form-control pl-8 text-sm">
+          </div>
         </div>
+      </div>
 
-        <div>
-          <label class="form-label" for="sal-curr">Currency Symbol</label>
-          <input type="text" id="sal-curr" name="salary_currency" value="{{ form_data.get('salary_currency', '$') }}" class="form-control text-sm">
+      <!-- Real-time Live Salary Preview -->
+      <div class="p-3 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-tag text-blue-600"></i>
+          <span class="font-semibold">Candidate Salary Display:</span>
+          <span id="salary-preview-text" class="font-bold text-slate-900 bg-white px-2.5 py-0.5 rounded-md border border-blue-200 shadow-xs">
+            Competitive (Salary negotiable)
+          </span>
         </div>
+        <span class="text-[11px] text-blue-700 hidden sm:inline">Will be shown in search cards & details</span>
       </div>
 
       <div>
@@ -186,4 +264,110 @@
 
   </form>
 </div>
+
+<!-- Country-to-Currency Sync & Live Salary Preview Script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const countrySelect = document.getElementById('country-selector');
+  const currencyDisplay = document.getElementById('currency-code-display');
+  const currInput = document.getElementById('sal-curr');
+  const minInput = document.getElementById('sal-min');
+  const maxInput = document.getElementById('sal-max');
+  const previewText = document.getElementById('salary-preview-text');
+  const locInput = document.getElementById('job-loc');
+  const detectedBadge = document.getElementById('country-detected-text');
+  const prefixBadges = document.querySelectorAll('.currency-prefix-badge');
+
+  function updateCurrencyPrefix(symbol) {
+    prefixBadges.forEach(b => b.textContent = symbol || '₹');
+    updateSalaryPreview();
+  }
+
+  function updateSalaryPreview() {
+    const symbol = currInput ? (currInput.value.trim() || '₹') : '₹';
+    const minVal = minInput && minInput.value ? Number(minInput.value) : null;
+    const maxVal = maxInput && maxInput.value ? Number(maxInput.value) : null;
+
+    if (minVal && maxVal) {
+      previewText.textContent = `${symbol}${minVal.toLocaleString()} - ${symbol}${maxVal.toLocaleString()} / year`;
+    } else if (minVal) {
+      previewText.textContent = `From ${symbol}${minVal.toLocaleString()} / year`;
+    } else if (maxVal) {
+      previewText.textContent = `Up to ${symbol}${maxVal.toLocaleString()} / year`;
+    } else {
+      previewText.textContent = 'Competitive (Salary negotiable)';
+    }
+  }
+
+  if (countrySelect) {
+    countrySelect.addEventListener('change', () => {
+      const opt = countrySelect.options[countrySelect.selectedIndex];
+      if (opt && opt.value && opt.value !== 'CUSTOM') {
+        const symbol = opt.getAttribute('data-symbol') || '₹';
+        const code = opt.getAttribute('data-curr-code') || '';
+        const name = opt.getAttribute('data-curr-name') || '';
+        const country = opt.getAttribute('data-country') || '';
+        if (currInput) currInput.value = symbol;
+        if (currencyDisplay) currencyDisplay.value = `${code} — ${name}`;
+        if (detectedBadge) detectedBadge.textContent = `${country} (${symbol})`;
+        updateCurrencyPrefix(symbol);
+      } else if (opt && opt.value === 'CUSTOM') {
+        if (currencyDisplay) currencyDisplay.value = 'Custom Currency';
+        if (detectedBadge) detectedBadge.textContent = 'Custom Symbol';
+      }
+    });
+
+    // Trigger initial setup
+    const initialOpt = countrySelect.options[countrySelect.selectedIndex];
+    if (initialOpt && initialOpt.value && initialOpt.value !== 'CUSTOM') {
+      const symbol = (currInput && currInput.value.trim()) || initialOpt.getAttribute('data-symbol') || '₹';
+      if (currInput) currInput.value = symbol;
+      const code = initialOpt.getAttribute('data-curr-code') || '';
+      const name = initialOpt.getAttribute('data-curr-name') || '';
+      if (currencyDisplay) currencyDisplay.value = `${code} — ${name}`;
+      updateCurrencyPrefix(symbol);
+    }
+  }
+
+  if (currInput) {
+    currInput.addEventListener('input', () => {
+      updateCurrencyPrefix(currInput.value.trim());
+    });
+  }
+
+  if (minInput) minInput.addEventListener('input', updateSalaryPreview);
+  if (maxInput) maxInput.addEventListener('input', updateSalaryPreview);
+
+  // Auto-detect Country & Currency as user types location
+  if (locInput) {
+    locInput.addEventListener('input', () => {
+      const val = locInput.value.trim().toLowerCase();
+      if (!val || !countrySelect) return;
+
+      for (let i = 0; i < countrySelect.options.length; i++) {
+        const opt = countrySelect.options[i];
+        const countryName = (opt.getAttribute('data-country') || '').toLowerCase();
+        const countryCode = (opt.value || '').toLowerCase();
+        const kwList = (opt.getAttribute('data-keywords') || '').toLowerCase().split(',');
+
+        const matches = countryName && (
+          val.includes(countryName) || 
+          (countryCode && (val.endsWith(', ' + countryCode) || val === countryCode)) ||
+          kwList.some(k => k && k.length > 3 && val.includes(k)) ||
+          kwList.some(k => k && k.length <= 3 && new RegExp('\\b' + k + '\\b', 'i').test(val))
+        );
+
+        if (matches) {
+          if (countrySelect.selectedIndex !== i) {
+            countrySelect.selectedIndex = i;
+            countrySelect.dispatchEvent(new Event('change'));
+            if (detectedBadge) detectedBadge.textContent = `Auto-detected: ${opt.getAttribute('data-country')}`;
+          }
+          break;
+        }
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

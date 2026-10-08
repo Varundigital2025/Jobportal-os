@@ -55,11 +55,13 @@ def create_app(config_class=Config):
             unread_notifs = Notification.query.filter_by(user_id=user.id, is_read=False).count()
             if user.role == 'candidate':
                 saved_count = SavedJob.query.filter_by(candidate_id=user.id).count()
+        from services.currency_service import GLOBAL_COUNTRIES_CURRENCIES
         return dict(
             current_user=user,
             user_saved_jobs_count=saved_count,
             unread_notifications_count=unread_notifs,
-            site_settings=get_all_settings()
+            site_settings=get_all_settings(),
+            global_countries_currencies=GLOBAL_COUNTRIES_CURRENCIES
         )
 
     # Public Homepage
