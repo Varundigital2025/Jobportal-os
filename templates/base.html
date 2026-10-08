@@ -24,13 +24,28 @@
         extend: {
           colors: {
             brand: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              200: '#bfdbfe',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-              800: '#1e40af',
+              50: '{{ theme_palette["50"] if theme_palette else "#eff6ff" }}',
+              100: '{{ theme_palette["100"] if theme_palette else "#dbeafe" }}',
+              200: '{{ theme_palette["200"] if theme_palette else "#bfdbfe" }}',
+              300: '{{ theme_palette["300"] if theme_palette else "#93c5fd" }}',
+              400: '{{ theme_palette["400"] if theme_palette else "#60a5fa" }}',
+              500: '{{ theme_palette["500"] if theme_palette else "#3b82f6" }}',
+              600: '{{ theme_palette["600"] if theme_palette else "#2563eb" }}',
+              700: '{{ theme_palette["700"] if theme_palette else "#1d4ed8" }}',
+              800: '{{ theme_palette["800"] if theme_palette else "#1e40af" }}',
+              900: '{{ theme_palette["900"] if theme_palette else "#1e3a8a" }}',
+            },
+            blue: {
+              50: '{{ theme_palette["50"] if theme_palette else "#eff6ff" }}',
+              100: '{{ theme_palette["100"] if theme_palette else "#dbeafe" }}',
+              200: '{{ theme_palette["200"] if theme_palette else "#bfdbfe" }}',
+              300: '{{ theme_palette["300"] if theme_palette else "#93c5fd" }}',
+              400: '{{ theme_palette["400"] if theme_palette else "#60a5fa" }}',
+              500: '{{ theme_palette["500"] if theme_palette else "#3b82f6" }}',
+              600: '{{ theme_palette["600"] if theme_palette else "#2563eb" }}',
+              700: '{{ theme_palette["700"] if theme_palette else "#1d4ed8" }}',
+              800: '{{ theme_palette["800"] if theme_palette else "#1e40af" }}',
+              900: '{{ theme_palette["900"] if theme_palette else "#1e3a8a" }}',
             }
           },
           fontFamily: {
@@ -43,6 +58,44 @@
 
   <!-- Core Design Tokens & Custom Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style id="dynamic-theme-tokens">
+    :root {
+      --primary: {{ theme_palette["600"] if theme_palette else "#2563eb" }};
+      --primary-hover: {{ theme_palette["700"] if theme_palette else "#1d4ed8" }};
+      --primary-light: {{ theme_palette["50"] if theme_palette else "#eff6ff" }};
+      --primary-dark: {{ theme_palette["800"] if theme_palette else "#1e40af" }};
+      --primary-rgb: {{ theme_palette["rgb"] if theme_palette else "37, 99, 235" }};
+      --primary-contrast: {{ theme_palette["contrast"] if theme_palette else "#ffffff" }};
+      --theme-accent: {{ theme_palette["600"] if theme_palette else "#2563eb" }};
+    }
+    .btn-primary {
+      background-color: var(--primary) !important;
+      border-color: var(--primary) !important;
+      color: var(--primary-contrast) !important;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover) !important;
+      border-color: var(--primary-hover) !important;
+      color: var(--primary-contrast) !important;
+    }
+    .btn-outline-primary {
+      color: var(--primary) !important;
+      border-color: var(--primary) !important;
+    }
+    .btn-outline-primary:hover {
+      background-color: var(--primary-light) !important;
+      color: var(--primary-hover) !important;
+    }
+    .badge-primary {
+      background-color: var(--primary-light) !important;
+      color: var(--primary-dark) !important;
+      border-color: {{ theme_palette["200"] if theme_palette else "#bfdbfe" }} !important;
+    }
+    .form-control:focus {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18) !important;
+    }
+  </style>
   {% block extra_css %}{% endblock %}
   {% if site_settings and site_settings.custom_header_script %}
     {{ site_settings.custom_header_script | safe }}
@@ -70,15 +123,15 @@
                      alt="{{ site_settings.admin_portal_name }}" class="h-8 max-w-[150px] object-contain"
                      onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
                 <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm shadow-xs group-hover:bg-slate-800 transition hidden">
-                  <i class="fa-solid fa-shield-halved text-rose-400"></i>
+                  <i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i>
                 </div>
               {% else %}
                 <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm shadow-xs group-hover:bg-slate-800 transition">
-                  <i class="fa-solid fa-shield-halved text-rose-400"></i>
+                  <i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i>
                 </div>
                 <div class="flex flex-col">
                   <span class="font-bold text-sm sm:text-base text-slate-900 leading-tight">{{ site_settings.admin_portal_name or 'JobPortal Admin' }}</span>
-                  <span class="text-[9px] text-rose-600 font-bold tracking-wider uppercase leading-none">{{ site_settings.admin_badge_text or 'Console' }}</span>
+                  <span class="text-[9px] font-bold tracking-wider uppercase leading-none" style="color: var(--primary);">{{ site_settings.admin_badge_text or 'Console' }}</span>
                 </div>
               {% endif %}
             </a>

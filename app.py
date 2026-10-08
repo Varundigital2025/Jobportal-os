@@ -56,11 +56,16 @@ def create_app(config_class=Config):
             if user.role == 'candidate':
                 saved_count = SavedJob.query.filter_by(candidate_id=user.id).count()
         from services.currency_service import GLOBAL_COUNTRIES_CURRENCIES
+        from services.settings_service import generate_theme_palette, THEME_PRESETS
+        settings = get_all_settings()
+        theme_palette = settings.get('theme_palette') or generate_theme_palette(settings.get('theme_color', '#2563EB'))
         return dict(
             current_user=user,
             user_saved_jobs_count=saved_count,
             unread_notifications_count=unread_notifs,
-            site_settings=get_all_settings(),
+            site_settings=settings,
+            theme_palette=theme_palette,
+            theme_presets=THEME_PRESETS,
             global_countries_currencies=GLOBAL_COUNTRIES_CURRENCIES
         )
 

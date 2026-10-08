@@ -1056,6 +1056,77 @@ class JobPortalComprehensiveTests(unittest.TestCase):
                     db.session.commit()
             self.client.get('/auth/logout')
 
+    def test_13_workspace_accent_theme_and_color_wheel(self):
+        """
+        Verify Workspace Accent Theme in Admin Settings:
+        1. Settings UI provides curated presets, color wheel picker, and hex code input.
+        2. Updating theme preset changes workspace and website primary color.
+        3. Custom hex code updates website and admin theme dynamically.
+        """
+        # 1. Login as Admin
+        self.client.post('/auth/login', data={
+            'email': 'admin@jobportal.local',
+            'password': 'AdminPassword@2026'
+        }, follow_redirects=True)
+
+        # 2. Verify Settings Page UI elements
+        settings_res = self.client.get('/admin/settings?tab=admin_portal')
+        self.assertEqual(settings_res.status_code, 200)
+        self.assertIn(b'Workspace Accent Theme', settings_res.data)
+        self.assertIn(b'theme_color_picker', settings_res.data)
+        self.assertIn(b'theme_color_input', settings_res.data)
+        self.assertIn(b'theme-live-preview-box', settings_res.data)
+        self.assertIn(b'Curated Palettes', settings_res.data)
+
+        # 3. Update to Emerald Preset
+        update_preset_res = self.client.post('/admin/settings', data={
+            'action': 'update_admin_branding',
+            'admin_portal_name': 'JobPortal Enterprise Suite',
+            'admin_portal_tagline': 'ERP Operations',
+            'admin_badge_text': 'Console Pro',
+            'admin_theme': 'emerald',
+            'theme_color': '#059669'
+        }, follow_redirects=True)
+        self.assertEqual(update_preset_res.status_code, 200)
+
+        from services.settings_service import get_all_settings
+        with self.app.app_context():
+            settings = get_all_settings()
+            self.assertEqual(settings['theme_color'], '#059669')
+            self.assertEqual(settings['admin_theme'], 'emerald')
+            self.assertEqual(settings['theme_palette']['600'], '#059669')
+
+        # Verify public website reflects Emerald color
+        home_res = self.client.get('/')
+        self.assertEqual(home_res.status_code, 200)
+        self.assertIn(b'#059669', home_res.data)
+
+        # 4. Update to Custom Color Code (#7C3AED - Royal Purple)
+        update_custom_res = self.client.post('/admin/settings', data={
+            'action': 'update_admin_branding',
+            'admin_portal_name': 'JobPortal Enterprise Suite',
+            'admin_portal_tagline': 'ERP Operations',
+            'admin_badge_text': 'Console Pro',
+            'admin_theme': '',
+            'theme_color': '#7C3AED'
+        }, follow_redirects=True)
+        self.assertEqual(update_custom_res.status_code, 200)
+
+        with self.app.app_context():
+            settings = get_all_settings()
+            self.assertEqual(settings['theme_color'], '#7C3AED')
+            self.assertEqual(settings['theme_palette']['600'], '#7C3AED')
+            self.assertIn('rgb', settings['theme_palette'])
+            self.assertIn('contrast', settings['theme_palette'])
+
+        # Verify public website and admin dashboard reflect Custom Color
+        home_res2 = self.client.get('/')
+        self.assertIn(b'#7C3AED', home_res2.data)
+        admin_res2 = self.client.get('/admin/dashboard')
+        self.assertIn(b'#7C3AED', admin_res2.data)
+
+        self.client.get('/auth/logout')
+
 
 if __name__ == '__main__':
     unittest.main()

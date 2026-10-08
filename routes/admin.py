@@ -11,7 +11,8 @@ from services.auth_service import get_current_user, admin_required
 from services.application_service import update_application_status
 from services.file_service import save_resume, save_profile_photo, save_company_logo, save_branding_image
 from services.settings_service import (
-    get_all_settings, get_setting, set_setting, update_settings, generate_secure_api_key
+    get_all_settings, get_setting, set_setting, update_settings, generate_secure_api_key,
+    THEME_PRESETS, normalize_hex_color, resolve_theme_color, generate_theme_palette
 )
 from routes.jobs import CATEGORIES, JOB_TYPES, WORK_MODES, EXPERIENCE_LEVELS
 from config import Config
@@ -529,17 +530,42 @@ def settings():
             admin_portal_name = request.form.get('admin_portal_name', '').strip()
             admin_portal_tagline = request.form.get('admin_portal_tagline', '').strip()
             admin_badge_text = request.form.get('admin_badge_text', '').strip()
-            admin_theme = request.form.get('admin_theme', 'slate').strip()
+            admin_theme = request.form.get('admin_theme', '').strip()
+            theme_color = request.form.get('theme_color', '').strip()
 
             if not admin_portal_name:
                 flash('Admin Portal Name cannot be empty.', 'danger')
                 return redirect(url_for('admin.settings', tab='admin_portal'))
 
+            # Resolve color and theme preset
+            if theme_color:
+                resolved_hex = normalize_hex_color(theme_color)
+            elif admin_theme:
+                resolved_hex = resolve_theme_color(admin_theme)
+            else:
+                resolved_hex = '#2563EB'
+
+            # Check if resolved hex matches any preset
+            resolved_preset_key = None
+            for k, v in THEME_PRESETS.items():
+                if v['primary'].upper() == resolved_hex.upper():
+                    resolved_preset_key = k
+                    break
+
+            # If user explicitly picked a preset name and didn't provide a different custom hex
+            if admin_theme.lower() in THEME_PRESETS and (not theme_color or THEME_PRESETS[admin_theme.lower()]['primary'].upper() == resolved_hex.upper()):
+                final_admin_theme = admin_theme.lower()
+            elif resolved_preset_key:
+                final_admin_theme = resolved_preset_key
+            else:
+                final_admin_theme = resolved_hex
+
             updates = {
                 'admin_portal_name': admin_portal_name,
                 'admin_portal_tagline': admin_portal_tagline,
                 'admin_badge_text': admin_badge_text or 'SuperAdmin Console',
-                'admin_theme': admin_theme if admin_theme in ['slate', 'dark', 'indigo', 'rose', 'emerald'] else 'slate'
+                'admin_theme': final_admin_theme,
+                'theme_color': resolved_hex,
             }
 
             # Check if admin logo was uploaded
